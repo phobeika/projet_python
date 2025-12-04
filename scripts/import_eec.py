@@ -1,4 +1,14 @@
-
+import pandas as pd
+import requests
+from io import BytesIO
+from zipfile import ZipFile
+import matplotlib.pyplot as plt
+import numpy as np
+from lets_plot import *
+from palmerpenguins import load_penguins
+from urllib import request
+from io import BytesIO
+from sklearn.cluster import KMeans
 
 def read_csv_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
     """
