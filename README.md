@@ -4,6 +4,7 @@ Projet réalisé en 2025 par Lucile Aubain, Jean Lavallée et Paul Hobeika dans 
 
 
 # Sommaire
+
 1. [Introduction](#introduction)
 2. [Données](#donnees)
 3. [Méthode](#methode)
