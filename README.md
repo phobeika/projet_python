@@ -21,7 +21,6 @@ Projet réalisé en 2025 par Lucile Aubain, Jean Lavallée et Paul Hobeika dans 
 
 L'[enquête sur l'emploi, le chômage et l'inactivité](https://www.insee.fr/fr/metadonnees/source/serie/s1223) (appelée Enquête emploi en continu, ou "EEC") est réalisée par l'Insee. Elle vise à dresser un état des lieux en continu du marché du travail français. Menée une fois par an depuis 1950, elle est réalisée sur toutes les semaines de l'année depuis 2003. Nous obtenons les données pour les années XXXX à XXXX à partir des fichiers détails disponibles sur le site de l'Insee.
 
-
 ### Propagation du Covid-19
 
 
