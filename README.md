@@ -1,11 +1,10 @@
 # Python pour la data science
 
-Test Lucile
-
 Projet réalisé en 2025 par Lucile Aubain, Jean Lavallée et Paul Hobeika dans le cadre du cours de *Python pour la data science* enseigné en deuxième année de l'ENSAE.
 
 
 # Sommaire
+
 1. [Introduction](#introduction)
 2. [Données](#donnees)
 3. [Méthode](#methode)
