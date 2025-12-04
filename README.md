@@ -1,3 +1,4 @@
 # Python pour la data science
 
-Projet statistique de Lucile Aubain, Jean Lavallée et Paul Hobeika. 2A ENSAE 2025-2026
+Projet réalisé par Lucile Aubain, Jean Lavallée et Paul Hobeika dans le cadre du cours de *Python pour la data science* enseigné en deuxième année de l'ENSAE.
+
