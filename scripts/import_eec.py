@@ -25,8 +25,7 @@ def read_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
         zip_bytes = BytesIO(response.content)
 
         with ZipFile(zip_bytes) as myzip:
-            files = [f for f in myzip.namelist() if f.endswith(('.csv', '.dbf'))]
-            if len(files) == 0:
+                files = [f for f in myzip.namelist() if f.lower().endswith(('.csv', '.dbf'))]            if len(files) == 0:
                 raise ValueError(f"Aucun fichier CSV ou DBF trouvé dans le ZIP à {url}")
 
             # Si mot-clé fourni
