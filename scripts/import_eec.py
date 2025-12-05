@@ -1,18 +1,14 @@
 import pandas as pd
 import requests
+from dbfread import DBF
 from io import BytesIO
 from zipfile import ZipFile
-import matplotlib.pyplot as plt
-import numpy as np
-from lets_plot import *
-from palmerpenguins import load_penguins
-from urllib import request
-from io import BytesIO
-from sklearn.cluster import KMeans
+import tempfile
+import os
 
-def read_csv_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
+def read_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
     """
-    Télécharge un ZIP depuis une URL (ou sa version de secours) et lit un CSV à l'intérieur.
+    Télécharge un ZIP depuis une URL (ou sa version de secours), lit un fichier CSV ou DBF à l'intérieur et l'importe sous la forme d'un dataframe Panda
     
     Paramètres :
     - url : URL principale du ZIP
@@ -31,40 +27,58 @@ def read_csv_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
         zip_bytes = BytesIO(response.content)
 
         with ZipFile(zip_bytes) as myzip:
-            csv_files = [f for f in myzip.namelist() if f.endswith('.csv')]
-            if len(csv_files) == 0:
-                raise ValueError(f"Aucun fichier CSV trouvé dans le ZIP à {url}")
+            files = [f for f in myzip.namelist() if f.endswith(('.csv', '.dbf'))]
+            if len(files) == 0:
+                raise ValueError(f"Aucun fichier CSV ou DBF trouvé dans le ZIP à {url}")
 
             # Si mot-clé fourni
             if filename_keyword:
-                csv_files = [f for f in csv_files if filename_keyword in f]
-                if len(csv_files) == 0:
+                files = [f for f in files if filename_keyword in f]
+                if len(files) == 0:
                     raise ValueError(f"Aucun CSV contenant '{filename_keyword}' trouvé à {url}")
-                elif len(csv_files) > 1:
+                elif len(files) > 1:
                     raise ValueError(f"Plusieurs CSV contiennent '{filename_keyword}' à {url}: {csv_files}")
 
-            # Si plusieurs CSV et pas de mot-clé, prendre le plus gros
-            if len(csv_files) > 1:
-                file_sizes = {f: myzip.getinfo(f).file_size for f in csv_files}
-                largest_file = max(file_sizes, key=file_sizes.get)
-                print(f"Aucun mot-clé fourni : sélection du CSV le plus gros : {largest_file}")
-                csv_files = [largest_file]
+            # Choix du fichier le plus gros si pas de mot clé
+            if len(files) > 1:
+                sizes = {f: myzip.getinfo(f).file_size for f in files}
+                selected = max(sizes, key=sizes.get)
+                print(f"Aucun mot-clé : sélection du fichier le plus gros : {selected}")
+            else:
+                selected = files[0]
 
-            with myzip.open(csv_files[0]) as file:
-                return pd.read_csv(file, **kwargs)
+# ------ LECTURE DES FICHIERS -------
+            if selected.endswith(".csv"):
+                with myzip.open(selected) as file:
+                    return pd.read_csv(file, **kwargs)
+            
+             # ---- Lecture DBF ----
+            if selected.endswith(".dbf"):
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".dbf") as tmp:
+                    tmp.write(myzip.read(selected))
+                    tmp_path = tmp.name
 
-    # --- Étape 1 : tentative principale ---
+                try:
+                    table = DBF(tmp_path, ignore_missing_memofile=True)
+                    df = pd.DataFrame(iter(table))
+                    return df
+                finally:
+                    os.remove(tmp_path)
+
+    # ---- Tentative principale ----
     try:
         print(f"Téléchargement depuis l'URL principale : {url}")
         return try_read(url)
-    
-    # --- Étape 2 : tentative backup ---
+
+    # ---- Tentative backup ----
     except Exception as e:
         if backup_url:
-            print(f"⚠️ Erreur avec l'URL principale ({e}). Tentative avec le backup : {backup_url}")
+            print(f"⚠️ Échec avec URL principale ({e}). Tentative avec {backup_url}")
             try:
                 return try_read(backup_url)
             except Exception as e2:
-                raise RuntimeError(f"Échec avec les deux URLs.\nErreur principale : {e}\nErreur backup : {e2}")
+                raise RuntimeError(
+                    f"Échec avec les deux URLs.\nErreur principale : {e}\nErreur backup : {e2}"
+                )
         else:
-            raise RuntimeError(f"Échec avec l'URL principale et aucun backup fourni.\nErreur : {e}")
+            raise RuntimeError(f"Erreur : {e}")
