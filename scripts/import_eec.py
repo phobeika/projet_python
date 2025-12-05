@@ -3,6 +3,8 @@ import requests
 from dbfread import DBF
 from io import BytesIO
 from zipfile import ZipFile
+import tempfile
+import os
 
 def read_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
     """
@@ -25,12 +27,13 @@ def read_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
         zip_bytes = BytesIO(response.content)
 
         with ZipFile(zip_bytes) as myzip:
-                files = [f for f in myzip.namelist() if f.lower().endswith(('.csv', '.dbf'))]            if len(files) == 0:
+            files = [f for f in myzip.namelist() if f.endswith(('.csv', '.dbf'))]
+            if len(files) == 0:
                 raise ValueError(f"Aucun fichier CSV ou DBF trouvé dans le ZIP à {url}")
 
             # Si mot-clé fourni
             if filename_keyword:
-                files = [f for f in csv_files if filename_keyword in f]
+                files = [f for f in files if filename_keyword in f]
                 if len(files) == 0:
                     raise ValueError(f"Aucun CSV contenant '{filename_keyword}' trouvé à {url}")
                 elif len(files) > 1:
@@ -48,31 +51,34 @@ def read_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
             if selected.endswith(".csv"):
                 with myzip.open(selected) as file:
                     return pd.read_csv(file, **kwargs)
+            
+             # ---- Lecture DBF ----
+            if selected.endswith(".dbf"):
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".dbf") as tmp:
+                    tmp.write(myzip.read(selected))
+                    tmp_path = tmp.name
 
-            elif selected.endswith(".dbf"):
-    # Extraction du DBF dans un buffer
-                dbf_bytes = BytesIO(myzip.read(selected))
-                
-   # dbfread lit depuis un fichier-like → on doit écrire en mémoire
-                temp_dbf = BytesIO(dbf_bytes.getvalue())
-                table = DBF(temp_dbf, ignore_missing_memofile=True)
-                
-                # Conversion DBF → DataFrame
-                df = pd.DataFrame(iter(table))
-                return df
+                try:
+                    table = DBF(tmp_path, ignore_missing_memofile=True)
+                    df = pd.DataFrame(iter(table))
+                    return df
+                finally:
+                    os.remove(tmp_path)
 
-    # --- Étape 1 : tentative principale ---
+    # ---- Tentative principale ----
     try:
         print(f"Téléchargement depuis l'URL principale : {url}")
         return try_read(url)
-    
-    # --- Étape 2 : tentative backup ---
+
+    # ---- Tentative backup ----
     except Exception as e:
         if backup_url:
-            print(f"⚠️ Erreur avec l'URL principale ({e}). Tentative avec le backup : {backup_url}")
+            print(f"⚠️ Échec avec URL principale ({e}). Tentative avec {backup_url}")
             try:
                 return try_read(backup_url)
             except Exception as e2:
-                raise RuntimeError(f"Échec avec les deux URLs.\nErreur principale : {e}\nErreur backup : {e2}")
+                raise RuntimeError(
+                    f"Échec avec les deux URLs.\nErreur principale : {e}\nErreur backup : {e2}"
+                )
         else:
-            raise RuntimeError(f"Échec avec l'URL principale et aucun backup fourni.\nErreur : {e}")
+            raise RuntimeError(f"Erreur : {e}")
