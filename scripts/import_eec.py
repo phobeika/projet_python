@@ -10,9 +10,9 @@ from urllib import request
 from io import BytesIO
 from sklearn.cluster import KMeans
 
-def read_csv_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
+def read_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
     """
-    Télécharge un ZIP depuis une URL (ou sa version de secours) et lit un CSV à l'intérieur.
+    Télécharge un ZIP depuis une URL (ou sa version de secours), lit un fichier CSV ou DBF à l'intérieur et l'importe sous la forme d'un dataframe Panda
     
     Paramètres :
     - url : URL principale du ZIP
@@ -31,27 +31,39 @@ def read_csv_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
         zip_bytes = BytesIO(response.content)
 
         with ZipFile(zip_bytes) as myzip:
-            csv_files = [f for f in myzip.namelist() if f.endswith('.csv')]
-            if len(csv_files) == 0:
-                raise ValueError(f"Aucun fichier CSV trouvé dans le ZIP à {url}")
+            files = [f for f in myzip.namelist() if f.endswith(('.csv', '.bdf'))]
+            if len(files) == 0:
+                raise ValueError(f"Aucun fichier CSV ou BDF trouvé dans le ZIP à {url}")
 
             # Si mot-clé fourni
             if filename_keyword:
-                csv_files = [f for f in csv_files if filename_keyword in f]
-                if len(csv_files) == 0:
+                files = [f for f in csv_files if filename_keyword in f]
+                if len(files) == 0:
                     raise ValueError(f"Aucun CSV contenant '{filename_keyword}' trouvé à {url}")
-                elif len(csv_files) > 1:
+                elif len(files) > 1:
                     raise ValueError(f"Plusieurs CSV contiennent '{filename_keyword}' à {url}: {csv_files}")
 
-            # Si plusieurs CSV et pas de mot-clé, prendre le plus gros
-            if len(csv_files) > 1:
-                file_sizes = {f: myzip.getinfo(f).file_size for f in csv_files}
-                largest_file = max(file_sizes, key=file_sizes.get)
-                print(f"Aucun mot-clé fourni : sélection du CSV le plus gros : {largest_file}")
-                csv_files = [largest_file]
+            # Choix du fichier le plus gros si pas de mot clé
+            if len(files) > 1:
+                sizes = {f: myzip.getinfo(f).file_size for f in files}
+                selected = max(sizes, key=sizes.get)
+                print(f"Aucun mot-clé : sélection du fichier le plus gros : {selected}")
+            else:
+                selected = files[0]
 
-            with myzip.open(csv_files[0]) as file:
-                return pd.read_csv(file, **kwargs)
+# ------ LECTURE DES FICHIERS -------
+            if selected.endswith(".csv"):
+                with myzip.open(selected) as file:
+                    return pd.read_csv(file, **kwargs)
+
+            elif selected.endswith(".bdf"):
+                # Extraction du BDF dans un buffer
+                bdf_bytes = BytesIO(myzip.read(selected))
+                raw = mne.io.read_raw_bdf(bdf_bytes, preload=True, **kwargs)
+                
+                # Conversion direct → DataFrame
+                df = raw.to_data_frame()
+                return df
 
     # --- Étape 1 : tentative principale ---
     try:
