@@ -1,14 +1,8 @@
 import pandas as pd
 import requests
+from dbfread import DBF
 from io import BytesIO
 from zipfile import ZipFile
-import matplotlib.pyplot as plt
-import numpy as np
-from lets_plot import *
-from palmerpenguins import load_penguins
-from urllib import request
-from io import BytesIO
-from sklearn.cluster import KMeans
 
 def read_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
     """
@@ -31,9 +25,9 @@ def read_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
         zip_bytes = BytesIO(response.content)
 
         with ZipFile(zip_bytes) as myzip:
-            files = [f for f in myzip.namelist() if f.endswith(('.csv', '.bdf'))]
+            files = [f for f in myzip.namelist() if f.endswith(('.csv', '.dbf'))]
             if len(files) == 0:
-                raise ValueError(f"Aucun fichier CSV ou BDF trouvé dans le ZIP à {url}")
+                raise ValueError(f"Aucun fichier CSV ou DBF trouvé dans le ZIP à {url}")
 
             # Si mot-clé fourni
             if filename_keyword:
@@ -56,13 +50,16 @@ def read_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
                 with myzip.open(selected) as file:
                     return pd.read_csv(file, **kwargs)
 
-            elif selected.endswith(".bdf"):
-                # Extraction du BDF dans un buffer
-                bdf_bytes = BytesIO(myzip.read(selected))
-                raw = mne.io.read_raw_bdf(bdf_bytes, preload=True, **kwargs)
+            elif selected.endswith(".dbf"):
+    # Extraction du DBF dans un buffer
+                dbf_bytes = BytesIO(myzip.read(selected))
                 
-                # Conversion direct → DataFrame
-                df = raw.to_data_frame()
+   # dbfread lit depuis un fichier-like → on doit écrire en mémoire
+                temp_dbf = BytesIO(dbf_bytes.getvalue())
+                table = DBF(temp_dbf, ignore_missing_memofile=True)
+                
+                # Conversion DBF → DataFrame
+                df = pd.DataFrame(iter(table))
                 return df
 
     # --- Étape 1 : tentative principale ---
