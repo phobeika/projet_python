@@ -5,10 +5,10 @@ Projet réalisé en 2025 par Lucile Aubain, Jean Lavallée et Paul Hobeika dans 
 
 # Sommaire
 
-1. [Introduction](#introduction)
-2. [Données](#donnees)
-3. [Méthode](#methode)
-4. [Résultats](#resultats)
+1. [Introduction](#readme_introduction)
+2. [Données](#readme_donnees)
+3. [Méthode](#readme_methode)
+4. [Résultats](#readme_resultats)
 
 
 ## 1. Introduction <a name="introduction">
