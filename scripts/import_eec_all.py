@@ -2,18 +2,26 @@
 import pandas as pd
 from scripts import import_eec
 
-def load_eec_all(core_vars=None):
+def load_eec_all(years=None, core_vars=None):
     """
     Télécharge et concatène les fichiers EEC 2010-2024 depuis l'INSEE (avec backup optionnel)
     et retourne un DataFrame pandas contenant uniquement les colonnes demandées (core_vars), ou
     par défaut l'ensemble des colonnes communes à toutes les années.
 
     Paramètres :
+    - years : liste ou range des années à importer (entre 2010 et 2024). Si None, toutes les années 2010-2024 sont importées.
     - core_vars : liste de colonnes à conserver. Si None, on utilisera toutes les colonnes communes.
     
     Retour :
     - pandas DataFrame
     """
+
+    # Si aucun argument `years` n'a été indiqué
+    if years is None:
+        years = range(2010, 2025)
+
+    # Filtre pour s'assurer que les années indiquées sont bien entre 2010 et 2024
+    years = [y for y in years if 2010 <= y <= 2024]
 
     # URLs principales
     urls = {
@@ -54,7 +62,7 @@ def load_eec_all(core_vars=None):
     }
 
     dfs = []
-    for year in range(2010, 2025):
+    for year in years:
         sep = ";" if year >= 2018 else None  # CSV plus récent utilise ;
         df = import_eec.read_from_zip(urls[year], backup_url=backups[year], sep=sep)
         dfs.append(df)
