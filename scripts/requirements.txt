@@ -1,2 +1,3 @@
 lets-plot
 palmerpenguins
+matplotlib
