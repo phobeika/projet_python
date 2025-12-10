@@ -1,3 +1,4 @@
 lets-plot
 palmerpenguins
 matplotlib
+scikit-learn
