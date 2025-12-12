@@ -77,7 +77,7 @@ def plot_hosp_year(df, year=2020):
 
     p = (
         ggplot(df_daily, aes(x="date", y="hosp"))
-        + geom_line(color="steelblue", size=1.2)
+        + geom_line(color="#248BFF", size=1.2)
         + ggtitle(f"Hospitalisations Covid - France - {year}")
         + xlab("Date")
         + ylab("Nb hospitalisations")
