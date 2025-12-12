@@ -1,5 +1,6 @@
 import requests
 import pandas as pd
+from lets_plot import *
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
@@ -28,49 +29,63 @@ def import_hosp(
     raise RuntimeError("❌ L'importation a échoué depuis les deux sources.")
 
 
-def plot_hosp(df, year=2020):
+
+
+from lets_plot import *
+import pandas as pd
+
+
+from lets_plot import *
+import pandas as pd
+
+def plot_hosp_year(df, year=2020):
     """
-    Filtre les données pour une année donnée, vérifie la complétude
-    et trace la somme quotidienne des hospitalisations.
+    Filtre par année (par défaut 2020), vérifie la cohérence des données (même nombre de départements chaque jour),
+    agrège les nombres d'hospitalisations par jour pour l'ensemble des départements puis renvoie en graphique l'évolution
+    du nombre d'hospitalisations par jour pendant l'année choisie.
     """
 
-    # --- 1. Filter by year ---
-    df_year = df[df["date"].str.contains(str(year), na=False)].copy()
-    
+    df = df.copy()
+
+    # --- 1. On met la variable `date` au format date ---
+    df["date"] = pd.to_datetime(df["date"], errors="raise")
+
+    # --- 2. Filtre pour l'année choisie ---
+    df_year = df[df["date"].dt.year == year]
+
     if df_year.empty:
         raise ValueError(f"Aucune donnée trouvée pour l'année {year}")
 
-    # --- 2. Vérification qu'il existe bien une donné par date et par département ---
+    # --- 3. Vérifie que les données sont complètes ---
     dept_count = df_year.groupby("date")["dep"].nunique()
 
     if dept_count.nunique() != 1:
-        raise ValueError("Incohérence : le nombre de départements varie selon les dates.")
+        raise ValueError(
+            "Incohérence détectée : le nombre de départements varie selon les dates."
+        )
 
+    # Génère un avertissement s'il y a des valeurs manquantes
     if df_year["hosp"].isna().any():
         raise ValueError("Présence de valeurs manquantes dans 'hosp'.")
 
-
-    # --- 3. Aggregate hospitalisations ---
+    # --- 4. Somme le nombre d'hospitalisations à chaque date pour l'ensemble des départements ---
     df_daily = df_year.groupby("date", as_index=False)["hosp"].sum()
-    df_daily["date"] = pd.to_datetime(df_daily["date"])
 
-    # --- 4. Plot ---
-    plt.figure(figsize=(14, 6))
-    plt.plot(df_daily["date"], df_daily["hosp"])
+    # --- 5. Plot ---
+    LetsPlot.setup_html()
 
-    # Month labels
-    plt.gca().xaxis.set_major_locator(mdates.MonthLocator())
-    plt.gca().xaxis.set_major_formatter(mdates.DateFormatter('%b'))
+    p = (
+        ggplot(df_daily, aes(x="date", y="hosp"))
+        + geom_line(color="steelblue", size=1.2)
+        + ggtitle(f"Hospitalisations Covid - France - {year}")
+        + xlab("Date")
+        + ylab("Nb hospitalisations")
+        + theme_minimal()
+    )
 
-    # X-axis limits for the selected year
-    plt.xlim(pd.Timestamp(f"{year}-01-01"), pd.Timestamp(f"{year}-12-31"))
+    return p
 
-    plt.title(f"Hospitalisations Covid - France - {year}")
-    plt.xlabel("Date")
-    plt.ylabel("Nb hospitalisations")
-    plt.grid(True)
-    plt.tight_layout()
-    plt.show()
+
 
 def plot_abs_hosp_by_quarter_base100(df_abs, df_daily, year=2020):
     """
