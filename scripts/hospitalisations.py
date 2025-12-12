@@ -4,6 +4,7 @@ from lets_plot import *
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 
+
 def import_hosp(
     url_main="https://odisse.santepubliquefrance.fr/api/explore/v2.1/catalog/datasets/covid-19-synthese-des-indicateurs-de-suivi-de-la-pandemie-dep/exports/json",
     url_backup="https://minio.lab.sspcloud.fr/phobeika/open_eec/covid-19-synthese-des-indicateurs-de-suivi-de-la-pandemie-dep.json"
@@ -157,3 +158,90 @@ def plot_abs_hosp_by_quarter_base100(df_abs, df_daily, year=2020):
     plt.show()
 
     return df_trim_abs, df_trim_hosp
+
+
+def plot_hosp_arrets_trim(df_eec, df_daily):
+    """
+    Traite les données d'enquête emploi et d'hospitalisation pour 2020,
+    calcule les agrégats par trimestre et affiche un graphique à double axe.
+    
+    arguments:
+        df_eec (pd.DataFrame): DataFrame contenant l'enquête emploi (colonne 'RABS', 'TRIM')
+        df_daily (pd.DataFrame): DataFrame contenant les données hospitalières (colonne 'date', 'hosp')
+    
+    outputs:
+        pd.DataFrame: Le dataframe fusionné utilisé pour le graphique.
+    """
+    
+    # --- 1. Traitement des Arrêts Maladie (Source: EEC) ---
+    # On ne compte que les absences pour congé maladie (RABS = 2.0)
+    df_rabs2 = df_eec[df_eec['RABS'] == 2.0].copy()
+    
+    # Groupement par trimestre et comptage
+    df_trim_count = df_rabs2.groupby('TRIM', as_index=False).size().rename(columns={'size': 'Effectifs'})
+    
+    # Formatage de la colonne TRIM (ajout du 'T' devant le numéro)
+    df_trim_count['TRIM'] = 'T' + df_trim_count['TRIM'].astype(str)
+
+
+    # --- 2. Traitement des Hospitalisations (Source: df_daily) ---
+    # Création d'une copie pour ne pas modifier l'original
+    df_daily_clean = df_daily.copy()
+    
+    # Extraction année et mois (si ce n'est pas déjà fait)
+    if not pd.api.types.is_datetime64_any_dtype(df_daily_clean['date']):
+        df_daily_clean['date'] = pd.to_datetime(df_daily_clean['date'])
+        
+    df_daily_clean['year'] = df_daily_clean['date'].dt.year
+    df_daily_clean['month'] = df_daily_clean['date'].dt.month
+    
+    # Filtrage sur 2020
+    df_daily_2020 = df_daily_clean[df_daily_clean['year'] == 2020]
+
+    # Calcul spécifique des trimestres (selon votre logique : T1 = Mars uniquement)
+    t1 = df_daily_2020[df_daily_2020['month'] == 3]['hosp'].sum()
+    t2 = df_daily_2020[df_daily_2020['month'].isin([4, 5, 6])]['hosp'].sum()
+    t3 = df_daily_2020[df_daily_2020['month'].isin([7, 8, 9])]['hosp'].sum()
+    t4 = df_daily_2020[df_daily_2020['month'].isin([10, 11, 12])]['hosp'].sum()
+
+    df_hosp_trim = pd.DataFrame({
+        "TRIM": ["T1", "T2", "T3", "T4"],
+        "hosp": [t1, t2, t3, t4]
+    })
+
+
+    # --- 3. Fusion des données ---
+    df_fusionne = pd.merge(
+        df_hosp_trim,
+        df_trim_count,
+        on='TRIM',
+        how='left'
+    )
+
+
+    # --- 4. Création du Graphique ---
+    # Définition des couleurs
+    color_hosp = '#248BFF'  # Bleu Insee
+    color_eff = '#7A57FF'   # Violet Insee
+
+    fig, ax1 = plt.subplots(figsize=(8, 5))
+
+    # Premier axe (Hospitalisations)
+    ax1.set_xlabel('Trimestre')
+    ax1.set_ylabel('Hospitalisations (en millions)', color=color_hosp, fontsize=12)
+    ax1.plot(df_fusionne['TRIM'], df_fusionne['hosp'], color=color_hosp, marker='o', linewidth=2, label='Hospitalisations')
+    ax1.tick_params(axis='y', labelcolor=color_hosp)
+    
+    # Ajout d'une grille verticale légère pour la lisibilité
+    ax1.grid(axis='x', alpha=0.3)
+
+    # Second axe (Arrêts maladie)
+    ax2 = ax1.twinx()
+    ax2.set_ylabel('Arrêts maladie', color=color_eff, fontsize=12)
+    ax2.plot(df_fusionne['TRIM'], df_fusionne['Effectifs'], color=color_eff, marker='^', linewidth=2, label='Arrêts maladie')
+    ax2.tick_params(axis='y', labelcolor=color_eff)
+
+    plt.title('Hospitalisations liées au Covid-19 et arrêts maladie en 2020')
+    plt.show()
+    
+    return df_fusionne
