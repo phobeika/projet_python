@@ -1,3 +1,10 @@
 lets-plot
 palmerpenguins
 dbfread
+matplotlib
+scikit-learn
+pyarrow
+requests
+numpy
+pandas
+setuptools
