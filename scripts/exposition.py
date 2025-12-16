@@ -93,7 +93,7 @@ def exposition(df, var="CSE", year=None):
     return df_prop.sort_values("proportion_rabs2", ascending=False)
 
 
-def exposition_annee(df, var="SEXE", year_col="ANNEE"):
+def exposition_annee(df, var="SEXE", year_col="ANNEE", annee=None):
     """
     Proportion d'arrêts maladie (RABS == 2) par année et selon `var`
     """
@@ -103,6 +103,14 @@ def exposition_annee(df, var="SEXE", year_col="ANNEE"):
     if year_col not in df.columns:
         raise ValueError(f"La colonne '{year_col}' est absente du DataFrame.")
 
+
+    # Filtrage sur l'année si demandé
+    if annee is not None:
+        if isinstance(annee, (list, tuple, set)):
+            df = df[df[year_col].isin(annee)]
+        else:
+            df = df[df[year_col] == annee]
+
     totaux = (
         df.groupby([year_col, var])
         .size()
@@ -110,7 +118,7 @@ def exposition_annee(df, var="SEXE", year_col="ANNEE"):
     )
 
     rabs2 = (
-        df[df["RABS"] == 2]
+        df[df["RABS"] == '2']
         .groupby([year_col, var])
         .size()
         .rename("effectif_rabs2")
