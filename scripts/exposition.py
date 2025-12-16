@@ -99,7 +99,7 @@ def exposition_annee(df, var="SEXE", year_col="ANNEE"):
     )
 
     rabs2 = (
-        df[df["RABS"] == 2]
+        df[df["RABS"] == '2']
         .groupby([year_col, var])
         .size()
         .rename("effectif_rabs2")

@@ -103,3 +103,104 @@ def recodages(df, vars_cat, vars_num):
 
     return df
 
+
+sexe_map = {
+    "1": "Homme",
+    "2": "Femme"
+}
+
+cse_map = {
+    0:  "Non renseigné",
+    10: "Agriculteurs",
+    11: "Agriculteurs petite exploitation",
+    12: "Agriculteurs moyenne exploitation",
+    13: "Agriculteurs grande exploitation",
+    21: "Artisans",
+    22: "Commerçants et assimilés",
+    23: "Chefs d'entreprise (10 salariés ou plus)",
+    31: "Professions libérales",
+    33: "Cadres de la fonction publique",
+    34: "Professeurs, professions scientifiques",
+    35: "Information, arts, spectacles",
+    37: "Cadres administratifs et commerciaux",
+    38: "Ingénieurs et cadres techniques",
+    42: "Instituteurs et assimilés",
+    43: "Professions santé & travail social",
+    44: "Clergé, religieux",
+    45: "Intermédiaires admin. fonction publique",
+    46: "Intermédiaires admin. & commerciaux",
+    47: "Techniciens",
+    48: "Contremaîtres, agents de maîtrise",
+    52: "Employés civils & agents de service FP",
+    53: "Policiers & militaires",
+    54: "Employés administratifs d'entreprise",
+    55: "Employés de commerce",
+    56: "Services directs aux particuliers",
+    62: "Ouvriers qualifiés type industriel",
+    63: "Ouvriers qualifiés type artisanal",
+    64: "Chauffeurs",
+    65: "Ouvriers manutention / magasinage / transport",
+    67: "Ouvriers non qualifiés type industriel",
+    68: "Ouvriers non qualifiés type artisanal",
+    69: "Ouvriers agricoles",
+    81: "Chômeurs n’ayant jamais travaillé"
+}
+
+naf_map = {
+    "": "Sans objet (inactifs occupés)",
+    "00": "Non renseigné",
+    "AZ": "Agriculture, sylviculture et pêche",
+    "BZ": "Industries extractives",
+    "CA": "Alimentaire, boissons, tabac",
+    "CB": "Textile, habillement, cuir, chaussure",
+    "CC": "Bois, papier, imprimerie",
+    "CD": "Cokéfaction et raffinage",
+    "CE": "Industrie chimique",
+    "CF": "Industrie pharmaceutique",
+    "CG": "Caoutchouc, plastique, minéraux non métalliques",
+    "CH": "Métallurgie et produits métalliques",
+    "CI": "Informatique, électronique, optique",
+    "CJ": "Équipements électriques",
+    "CK": "Machines et équipements",
+    "CL": "Matériels de transport",
+    "CM": "Autres industries manufacturières; réparation & installation",
+    "DZ": "Électricité, gaz, vapeur, air conditionné",
+    "EZ": "Eau, déchets, dépollution",
+    "FZ": "Construction",
+    "GZ": "Commerce, réparation auto/moto",
+    "HZ": "Transports et entreposage",
+    "IZ": "Hébergement et restauration",
+    "JA": "Édition, audiovisuel, diffusion",
+    "JB": "Télécommunications",
+    "JC": "Informatique & services d'information",
+    "KZ": "Activités financières et d’assurance",
+    "LZ": "Activités immobilières",
+    "MA": "Juridique, comptable, gestion, architecture, ingénierie",
+    "MB": "Recherche-développement scientifique",
+    "MC": "Autres activités spécialisées, scientifiques & techniques",
+    "NZ": "Services administratifs & soutien",
+    "OZ": "Administration publique",
+    "PZ": "Enseignement",
+    "QA": "Activités pour la santé humaine",
+    "QB": "Hébergement médico-social & action sociale",
+    "RZ": "Arts, spectacles, activités récréatives",
+    "SZ": "Autres activités de services",
+    "TZ": "Activités des ménages employeurs & production pour usage propre",
+    "UZ": "Activités extra-territoriales"
+}
+
+
+def add_labels(df):
+    df = df.copy()
+    
+    if "SEXE" in df.columns:
+        df["SEXE_label"] = df["SEXE"].map(sexe_map)
+    
+    if "CSE" in df.columns:
+        df["CSE_label"] = df["CSE"].map(cse_map)
+    
+    if "NAF" in df.columns:
+        df["NAF_label"] = df["NAF"].map(naf_map)
+    
+    return df
+
