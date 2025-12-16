@@ -244,4 +244,7 @@ def plot_hosp_arrets_trim(df_eec, df_daily):
     plt.title('Hospitalisations liées au Covid-19 et arrêts maladie en 2020')
     plt.show()
     
+    correlation = df_fusionne[['hosp', 'Effectifs']].corr().iloc[0, 1]
+    print('Coefficient de corrélation entre les deux variables :', round(correlation,2))
+
     return df_fusionne

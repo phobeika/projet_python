@@ -8,13 +8,13 @@ import os
 
 def read_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
     """
-    Télécharge un ZIP depuis une URL (ou sa version de secours), lit un fichier CSV 
+    Télécharge un ZIP ou un fichier direct depuis une URL, lit un fichier CSV 
     ou DBF à l'intérieur et l'importe sous la forme d'un dataframe Pandas
     
     Paramètres :
-    - url : URL principale du ZIP
+    - url : URL du fichier (ZIP ou direct CSV/DBF)
     - backup_url : URL de secours à utiliser en cas d'échec
-    - filename_keyword : mot-clé pour filtrer le CSV à ouvrir (facultatif)
+    - filename_keyword : mot-clé pour filtrer le CSV à ouvrir (facultatif, pour ZIP)
     - kwargs : paramètres additionnels passés à pd.read_csv
     
     Retour :
@@ -22,41 +22,59 @@ def read_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
     """
     
     def try_read(url):
-        """Sous-fonction : essaye de lire un ZIP depuis une URL donnée"""
+        """Sous-fonction : essaye de lire un fichier depuis une URL donnée"""
         response = requests.get(url)
         response.raise_for_status()  # lèvera une erreur si le téléchargement échoue
-        zip_bytes = BytesIO(response.content)
-
-        with ZipFile(zip_bytes) as myzip:
-            files = [f for f in myzip.namelist() if f.endswith(('.csv', '.dbf'))]
-            if len(files) == 0:
-                raise ValueError(f"Aucun fichier CSV ou DBF trouvé dans le ZIP à {url}")
-
-            # Si mot-clé fourni
-            if filename_keyword:
-                files = [f for f in files if filename_keyword in f]
+        
+        if url.endswith('.zip'):
+            # Traitement pour ZIP
+            zip_bytes = BytesIO(response.content)
+            with ZipFile(zip_bytes) as myzip:
+                files = [f for f in myzip.namelist() if f.endswith(('.csv', '.dbf'))]
                 if len(files) == 0:
-                    raise ValueError(f"Aucun CSV contenant '{filename_keyword}' trouvé à {url}")
-                elif len(files) > 1:
-                    raise ValueError(f"Plusieurs CSV contiennent '{filename_keyword}' à {url}: {csv_files}")
+                    raise ValueError(f"Aucun fichier CSV ou DBF trouvé dans le ZIP à {url}")
 
-            # Choix du fichier le plus gros si pas de mot clé
-            if len(files) > 1:
-                sizes = {f: myzip.getinfo(f).file_size for f in files}
-                selected = max(sizes, key=sizes.get)
-                print(f"Aucun mot-clé : sélection du fichier le plus gros : {selected}")
-            else:
-                selected = files[0]
+                # Si mot-clé fourni
+                if filename_keyword:
+                    files = [f for f in files if filename_keyword in f]
+                    if len(files) == 0:
+                        raise ValueError(f"Aucun CSV contenant '{filename_keyword}' trouvé à {url}")
+                    elif len(files) > 1:
+                        raise ValueError(f"Plusieurs CSV contiennent '{filename_keyword}' à {url}: {files}")
 
-# ------ LECTURE DES FICHIERS -------
-            if selected.endswith(".csv"):
-                with myzip.open(selected) as file:
-                    return pd.read_csv(file, **kwargs)
-            
-             # ---- Lecture DBF ----
-            if selected.endswith(".dbf"):
+                # Choix du fichier le plus gros si pas de mot clé
+                if len(files) > 1:
+                    sizes = {f: myzip.getinfo(f).file_size for f in files}
+                    selected = max(sizes, key=sizes.get)
+                    print(f"Aucun mot-clé : sélection du fichier le plus gros : {selected}")
+                else:
+                    selected = files[0]
+
+                # ------ LECTURE DES FICHIERS -------
+                if selected.endswith(".csv"):
+                    with myzip.open(selected) as file:
+                        return pd.read_csv(file, **kwargs)
+                
+                # ---- Lecture DBF ----
+                if selected.endswith(".dbf"):
+                    with tempfile.NamedTemporaryFile(delete=False, suffix=".dbf") as tmp:
+                        tmp.write(myzip.read(selected))
+                        tmp_path = tmp.name
+
+                    try:
+                        table = DBF(tmp_path, ignore_missing_memofile=True)
+                        df = pd.DataFrame(iter(table))
+                        return df
+                    finally:
+                        os.remove(tmp_path)
+        else:
+            # Traitement pour fichier direct
+            content = BytesIO(response.content)
+            if url.endswith('.csv'):
+                return pd.read_csv(content, **kwargs)
+            elif url.endswith('.dbf'):
                 with tempfile.NamedTemporaryFile(delete=False, suffix=".dbf") as tmp:
-                    tmp.write(myzip.read(selected))
+                    tmp.write(response.content)
                     tmp_path = tmp.name
 
                 try:
@@ -65,6 +83,8 @@ def read_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
                     return df
                 finally:
                     os.remove(tmp_path)
+            else:
+                raise ValueError(f"Type de fichier non supporté pour {url}. Supporte .zip, .csv, .dbf.")
 
     # ---- Tentative principale ----
     try:
