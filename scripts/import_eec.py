@@ -8,7 +8,8 @@ import os
 
 def read_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
     """
-    Télécharge un ZIP depuis une URL (ou sa version de secours), lit un fichier CSV ou DBF à l'intérieur et l'importe sous la forme d'un dataframe Panda
+    Télécharge un ZIP depuis une URL (ou sa version de secours), lit un fichier CSV 
+    ou DBF à l'intérieur et l'importe sous la forme d'un dataframe Pandas
     
     Paramètres :
     - url : URL principale du ZIP
@@ -82,3 +83,23 @@ def read_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
                 )
         else:
             raise RuntimeError(f"Erreur : {e}")
+        
+
+def convert_to_categorical(df, var):
+    df[var] = pd.to_numeric(df[var], errors = 'coerce').astype('Int64')
+    df[var] = df[var].astype('category')
+    return df
+
+def recodages(df, vars_cat, vars_num):   
+    # Normaliser les colonnes avec des problèmes de type mixte (ex: "2.0" vs 2.0)
+    # On convertit d'abord en numérique pour nettoyer, puis en catégories si nécessaire
+    for col in vars_cat:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce').astype('Int64').astype(str)
+    
+    for col in vars_num:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce').astype(int)
+
+    return df
+

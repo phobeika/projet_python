@@ -50,7 +50,7 @@ def exposition(df, var="CSE", year=None):
 
     # --- 1. Vérification année ---
     if year is None:
-        raise ValueError("You must provide a year (year cannot be None).")
+        raise ValueError("Merci d'indiquer une année")
     
     # Filtrage éventuel si la colonne existe
     if "year" in df.columns:

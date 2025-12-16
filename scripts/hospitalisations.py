@@ -97,7 +97,7 @@ def plot_abs_hosp_by_quarter_base100(df_abs, df_daily, year=2020):
     # ----------------------------------------------------------------------
     # 1) ABSENCES PAR TRIMESTRE
     # ----------------------------------------------------------------------
-    df_rabs = df_abs[df_abs['RABS'] == 2.0].copy()
+    df_rabs = df_abs[df_abs['RABS'] == '2'].copy()
     df_trim_abs = (
         df_rabs.groupby('TRIM', as_index=False)
                .size()
@@ -174,8 +174,8 @@ def plot_hosp_arrets_trim(df_eec, df_daily):
     """
     
     # --- 1. Traitement des Arrêts Maladie (Source: EEC) ---
-    # On ne compte que les absences pour congé maladie (RABS = 2.0)
-    df_rabs2 = df_eec[df_eec['RABS'] == 2.0].copy()
+    # On ne compte que les absences pour congé maladie (RABS = '2')
+    df_rabs2 = df_eec[df_eec['RABS'] == '2'].copy()
     
     # Groupement par trimestre et comptage
     df_trim_count = df_rabs2.groupby('TRIM', as_index=False).size().rename(columns={'size': 'Effectifs'})
