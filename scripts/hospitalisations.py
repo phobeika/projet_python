@@ -247,4 +247,4 @@ def plot_hosp_arrets_trim(df_eec, df_daily):
     correlation = df_fusionne[['hosp', 'Effectifs']].corr().iloc[0, 1]
     print('Coefficient de corrélation entre les deux variables :', round(correlation,2))
 
-    return df_fusionne
+    # return df_fusionne

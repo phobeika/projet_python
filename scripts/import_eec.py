@@ -130,41 +130,42 @@ sexe_map = {
 }
 
 cse_map = {
-    0:  "Non renseigné",
-    10: "Agriculteurs",
-    11: "Agriculteurs petite exploitation",
-    12: "Agriculteurs moyenne exploitation",
-    13: "Agriculteurs grande exploitation",
-    21: "Artisans",
-    22: "Commerçants et assimilés",
-    23: "Chefs d'entreprise (10 salariés ou plus)",
-    31: "Professions libérales",
-    33: "Cadres de la fonction publique",
-    34: "Professeurs, professions scientifiques",
-    35: "Information, arts, spectacles",
-    37: "Cadres administratifs et commerciaux",
-    38: "Ingénieurs et cadres techniques",
-    42: "Instituteurs et assimilés",
-    43: "Professions santé & travail social",
-    44: "Clergé, religieux",
-    45: "Intermédiaires admin. fonction publique",
-    46: "Intermédiaires admin. & commerciaux",
-    47: "Techniciens",
-    48: "Contremaîtres, agents de maîtrise",
-    52: "Employés civils & agents de service FP",
-    53: "Policiers & militaires",
-    54: "Employés administratifs d'entreprise",
-    55: "Employés de commerce",
-    56: "Services directs aux particuliers",
-    62: "Ouvriers qualifiés type industriel",
-    63: "Ouvriers qualifiés type artisanal",
-    64: "Chauffeurs",
-    65: "Ouvriers manutention / magasinage / transport",
-    67: "Ouvriers non qualifiés type industriel",
-    68: "Ouvriers non qualifiés type artisanal",
-    69: "Ouvriers agricoles",
-    81: "Chômeurs n’ayant jamais travaillé"
+    "0":  "Non renseigné",
+    "10": "Agriculteurs",
+    "11": "Agriculteurs petite exploitation",
+    "12": "Agriculteurs moyenne exploitation",
+    "13": "Agriculteurs grande exploitation",
+    "21": "Artisans",
+    "22": "Commerçants et assimilés",
+    "23": "Chefs d'entreprise (10 salariés ou plus)",
+    "31": "Professions libérales",
+    "33": "Cadres de la fonction publique",
+    "34": "Professeurs, professions scientifiques",
+    "35": "Information, arts, spectacles",
+    "37": "Cadres administratifs et commerciaux",
+    "38": "Ingénieurs et cadres techniques",
+    "42": "Instituteurs et assimilés",
+    "43": "Professions santé & travail social",
+    "44": "Clergé, religieux",
+    "45": "Intermédiaires admin. fonction publique",
+    "46": "Intermédiaires admin. & commerciaux",
+    "47": "Techniciens",
+    "48": "Contremaîtres, agents de maîtrise",
+    "52": "Employés civils & agents de service FP",
+    "53": "Policiers & militaires",
+    "54": "Employés administratifs d'entreprise",
+    "55": "Employés de commerce",
+    "56": "Services directs aux particuliers",
+    "62": "Ouvriers qualifiés type industriel",
+    "63": "Ouvriers qualifiés type artisanal",
+    "64": "Chauffeurs",
+    "65": "Ouvriers manutention / magasinage / transport",
+    "67": "Ouvriers non qualifiés type industriel",
+    "68": "Ouvriers non qualifiés type artisanal",
+    "69": "Ouvriers agricoles",
+    "81": "Chômeurs n’ayant jamais travaillé"
 }
+
 
 naf_map = {
     "": "Sans objet (inactifs occupés)",
@@ -219,8 +220,8 @@ def add_labels(df):
     if "CSE" in df.columns:
         df["CSE_label"] = df["CSE"].map(cse_map)
     
-    if "NAF" in df.columns:
-        df["NAF_label"] = df["NAF"].map(naf_map)
+    if "NAFG038UN" in df.columns:
+        df["NAF_label"] = df["NAFG038UN"].map(naf_map)
     
     return df
 
