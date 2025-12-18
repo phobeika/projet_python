@@ -81,16 +81,7 @@ def plot_score_exposition(
     figsize=(8,5),
     title=None
 ):
-    """
-    Trace la distribution du score d'exposition.
-    
-    - Sans `by` : barres simples + pourcentages
-    - Avec `by` : barres empilées selon la variable
-    """
 
-    # ---------------------------
-    # Labels par défaut intégrés
-    # ---------------------------
     default_labels = {
         "SEXE": {1: "Homme", 2: "Femme"},
         "CSER": {
@@ -136,16 +127,27 @@ def plot_score_exposition(
     # ===========================
     df_plot = df.copy()
 
+    # 🔹 mémoriser l’ordre initial AVANT renommage
+    order_initial = df_plot[by].dropna().unique()
+
     # Choix des labels
     if labels is not None:
         label_map = labels
     elif by in default_labels:
         label_map = default_labels[by]
     else:
-        label_map = None  # aucun renommage
+        label_map = None
 
     if label_map is not None:
         df_plot[by] = df_plot[by].map(label_map)
+
+        # 🔹 reconstruire l’ordre APRÈS renommage
+        ordered_labels = [label_map[x] for x in order_initial if x in label_map]
+        df_plot[by] = pd.Categorical(
+            df_plot[by],
+            categories=ordered_labels,
+            ordered=True
+        )
 
     table = pd.crosstab(df_plot[score_col], df_plot[by])
 
@@ -162,7 +164,6 @@ def plot_score_exposition(
         )
         bottom += table[col].values
 
-    # Pourcentages dans les barres
     for i, row in table.iterrows():
         total = row.sum()
         cumul = 0
@@ -186,3 +187,4 @@ def plot_score_exposition(
     plt.grid(axis="y", alpha=0.2)
     plt.tight_layout()
     plt.show()
+
