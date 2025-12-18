@@ -214,14 +214,58 @@ naf_map = {
 def add_labels(df):
     df = df.copy()
     
+    # --------------------
+    # SEXE 
+    # --------------------
     if "SEXE" in df.columns:
         df["SEXE_label"] = df["SEXE"].map(sexe_map)
     
+    # --------------------
+    # CSE + CSE_label 
+    # --------------------
     if "CSE" in df.columns:
         df["CSE_label"] = df["CSE"].map(cse_map)
+
+        # --------------------
+        # AJOUT : CSER
+        # --------------------
+        # On travaille sur une version nettoyée uniquement pour CSER
+        cse_clean = pd.to_numeric(df["CSE"], errors="coerce").astype("Int64")
+
+        cse_first_digit = cse_clean.astype(str).str[0]
+
+        cser_map = {
+         
+            "1": 1,
+            "2": 2,
+            "3": 3,
+            "4": 4,
+            "5": 5,
+            "6": 6,
+            "8": 8
+        }
+
+        df["CSER"] = cse_first_digit.map(cser_map)
+
+        cser_labels = {
+                        1: "Agriculteurs exploitants",
+            2: "Artisans, commerçants et chefs d'entreprise",
+            3: "Cadres et professions intellectuelles supérieures",
+            4: "Professions intermédiaires",
+            5: "Employés",
+            6: "Ouvriers",
+            8: "Chômeurs n'ayant jamais travaillé"
+        }
+
+        df["CSER_label"] = df["CSER"].map(cser_labels)
     
+    # --------------------
+    # NAF 
+    # --------------------
     if "NAFG038UN" in df.columns:
         df["NAF_label"] = df["NAFG038UN"].map(naf_map)
     
     return df
+
+
 
