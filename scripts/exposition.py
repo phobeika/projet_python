@@ -1,6 +1,8 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
+import statsmodels.formula.api as smf
+from patsy.contrasts import Treatment
 
 # Dictionnaire de recodage CSE → label texte
 
@@ -533,30 +535,32 @@ def plot_freq_exposition(
                 "Artisans, commerçants et chefs d'entreprise",
                 "Ouvriers",
                 "Professions intermédiaires",
-                "Employés",
+                "Employés"
             ],
             "colors": [
-                "#4E79A7",
+                "#EDC948",
+                "#E15759",
                 "#59A14F",
                 "#F28E2B",
-                "#EDC948",
+                
                 "#B07AA1",
-                "#E15759"
+                "#4E79A7" 
             ]
         },
-        "SEXE": {
-            "order": ["Femmes", "Hommes"],
-            "colors": ["#E15759", "#4E79A7"]
+        "SEXE_label": {
+            "order": ["Femme", "Homme"],
+            "colors": ["#CABCFF","#4E79A7"] # ou ["#E15759","#4E79A7"]
         },
         "PUB_label": {
             "order": [
-               "État", "Collectivités locales", "Hôpitaux publics", "Secteur privé"
+                "Hôpitaux publics", "État", "Collectivités locales","Secteur privé"
             ],
             "colors": [
-                "#4E79A7",
-                "#59A14F",
-                "#F28E2B",
-                "#EDC948"
+                "#A7D1FF",
+                "#E9C3FF",
+                "#CABCFF",
+                
+                "#D3D3D3"
             ]
         }
     }
@@ -622,5 +626,89 @@ def plot_freq_exposition(
     plt.legend(title=by, bbox_to_anchor=(1.05, 1), loc="upper left")
     plt.ylim(0, 100)
     plt.grid(axis="y", alpha=0.2)
+    plt.tight_layout()
+    plt.show()
+
+
+
+def regression_exposition(df, target="score_exposition", categorical_vars=None, reference_dict=None):
+    """
+    Effectue une régression linéaire OLS avec covariance robuste (HC3) sur un dataframe.
+    Retourne un DataFrame avec coefficients, intervalles de confiance et p-values,
+    avec des noms de variables simplifiés pour les qualitatives.
+    """
+    # On conserve seulement les colonnes nécessaires et on supprime les NA
+    cols = [target] + (categorical_vars if categorical_vars else [])
+    df_clean = df[cols].dropna()
+    
+    # Construction de la formule
+    formula_terms = []
+    for var in categorical_vars:
+        if reference_dict and var in reference_dict:
+            formula_terms.append(f'C({var}, Treatment(reference="{reference_dict[var]}"))')
+        else:
+            formula_terms.append(f'C({var})')
+    formula = f"{target} ~ " + " + ".join(formula_terms)
+    
+    # Ajustement du modèle OLS
+    modele = smf.ols(formula=formula, data=df_clean).fit()
+    modele_robust = modele.get_robustcov_results(cov_type="HC3")
+    
+    # Extraction des coefficients et statistiques
+    coef = modele_robust.params
+    conf = modele_robust.conf_int()
+    pval = modele_robust.pvalues
+    names = modele_robust.model.exog_names  # noms des variables
+
+    # Création du DataFrame
+    df_coef = pd.DataFrame({
+        "variable": names,
+        "coef": coef,
+        "ci_low": conf[:, 0],
+        "ci_high": conf[:, 1],
+        "p_value": pval
+    })
+
+    # Nettoyage des noms pour les variables qualitatives
+    cleaned_names = []
+    for name in df_coef['variable']:
+        # Si c'est une variable catégorielle codée par patsy, elle contient '[T.level]'
+        if "[T." in name:
+            level = name.split("[T.")[1].rstrip("]")
+            cleaned_names.append(level)
+        elif name == "Intercept":
+            cleaned_names.append("Intercept")
+        else:
+            cleaned_names.append(name)
+    df_coef['variable'] = cleaned_names
+    
+    return df_coef, modele_robust
+
+
+
+def plot_regression_exposition(df_coef, title="Représentation graphique des coefficients de la régression du score d'exposition"):
+    """
+    Trace les coefficients d'une régression avec intervalles de confiance.
+    
+    Parameters:
+    -----------
+    df_coef : pd.DataFrame
+        DataFrame contenant 'coef', 'ci_low', 'ci_high' et 'variable'.
+    title : str
+        Titre du graphique.
+    """
+    plt.figure(figsize=(8, 6))
+    y_pos = np.arange(len(df_coef))
+    
+    plt.errorbar(
+        df_coef["coef"], y_pos,
+        xerr=[df_coef["coef"] - df_coef["ci_low"], df_coef["ci_high"] - df_coef["coef"]],
+        fmt='o', color='black', ecolor='steelblue', capsize=4
+    )
+    plt.axvline(0, color='red', linestyle='--', alpha=0.7)
+    plt.yticks(y_pos, df_coef["variable"])
+    plt.xlabel("Effet marginal sur le score d'exposition")
+    plt.title(title)
+    plt.grid(axis="x", alpha=0.3)
     plt.tight_layout()
     plt.show()
