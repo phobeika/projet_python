@@ -210,6 +210,14 @@ naf_map = {
     "UZ": "Activités extra-territoriales"
 }
 
+pub_map = {
+    "1": "État",
+    "2": "Collectivités locales",
+    "3": "Hôpitaux publics",
+    "4": "Secteur privé"
+}
+
+
 
 def add_labels(df):
     df = df.copy()
@@ -219,6 +227,11 @@ def add_labels(df):
     # --------------------
     if "SEXE" in df.columns:
         df["SEXE_label"] = df["SEXE"].map(sexe_map)
+    
+    # PUB3FP
+    # --------------------
+    if "PUB3FP" in df.columns:
+        df["PUB_label"] = df["PUB3FP"].map(pub_map)
     
     # --------------------
     # CSE + CSE_label 

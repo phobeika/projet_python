@@ -504,3 +504,123 @@ def plot_score_exposition(
     plt.grid(axis="y", alpha=0.2)
     plt.tight_layout()
     plt.show()
+
+
+
+def plot_freq_exposition(
+    df,
+    score_col="score_exposition",
+    by="SEXE",
+    labels=None,
+    figsize=(9, 6),
+    title=None
+):
+    """
+    Graphique en barres empilées à 100 % :
+    répartition de `by` pour chaque valeur du score d'exposition.
+    """
+
+    df = df.copy()
+
+    # -----------------------
+    # Configuration interne
+    # -----------------------
+    modality_config = {
+        "CSER_label": {
+            "order": [
+                "Agriculteurs exploitants",
+                "Cadres et professions intellectuelles supérieures",
+                "Artisans, commerçants et chefs d'entreprise",
+                "Ouvriers",
+                "Professions intermédiaires",
+                "Employés",
+            ],
+            "colors": [
+                "#4E79A7",
+                "#59A14F",
+                "#F28E2B",
+                "#EDC948",
+                "#B07AA1",
+                "#E15759"
+            ]
+        },
+        "SEXE": {
+            "order": ["Femmes", "Hommes"],
+            "colors": ["#E15759", "#4E79A7"]
+        },
+        "PUB_label": {
+            "order": [
+               "État", "Collectivités locales", "Hôpitaux publics", "Secteur privé"
+            ],
+            "colors": [
+                "#4E79A7",
+                "#59A14F",
+                "#F28E2B",
+                "#EDC948"
+            ]
+        }
+    }
+
+    # -----------------------
+    # Recodage éventuel
+    # -----------------------
+    if labels is not None:
+        df[by] = df[by].map(labels)
+
+    # -----------------------
+    # Table de contingence
+    # -----------------------
+    table = pd.crosstab(df[score_col], df[by])
+
+    # Ordre des modalités si défini
+    if by in modality_config:
+        order = modality_config[by]["order"]
+        table = table.reindex(columns=order, fill_value=0)
+        colors = modality_config[by]["colors"]
+    else:
+        colors = None
+
+    # Normalisation en base 100 %
+    table_pct = table.div(table.sum(axis=1), axis=0) * 100
+
+    # -----------------------
+    # Graphique
+    # -----------------------
+    plt.figure(figsize=figsize)
+    bottom = np.zeros(len(table_pct))
+
+    for i, col in enumerate(table_pct.columns):
+        plt.bar(
+            table_pct.index,
+            table_pct[col],
+            bottom=bottom,
+            label=col,
+            edgecolor="black",
+            color=None if colors is None else colors[i]
+        )
+        bottom += table_pct[col].values
+
+    # Ajouter les pourcentages
+    for x, row in enumerate(table_pct.values):
+        cumul = 0
+        for val in row:
+            if val > 5:
+                plt.text(
+                    table_pct.index[x],
+                    cumul + val / 2,
+                    f"{val:.0f}%",
+                    ha="center",
+                    va="center",
+                    fontsize=9,
+                    color="white"
+                )
+            cumul += val
+
+    plt.xlabel("Score d'exposition")
+    plt.ylabel("Répartition (%)")
+    plt.title(title or f"Répartition de {by} selon le score d'exposition (base 100 %)")
+    plt.legend(title=by, bbox_to_anchor=(1.05, 1), loc="upper left")
+    plt.ylim(0, 100)
+    plt.grid(axis="y", alpha=0.2)
+    plt.tight_layout()
+    plt.show()
