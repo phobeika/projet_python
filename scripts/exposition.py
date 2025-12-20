@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import statsmodels.formula.api as smf
+import statsmodels.api as sm
 from patsy.contrasts import Treatment
 
 # Dictionnaire de recodage CSE → label texte
@@ -710,5 +711,81 @@ def plot_regression_exposition(df_coef, title="Représentation graphique des coe
     plt.xlabel("Effet marginal sur le score d'exposition")
     plt.title(title)
     plt.grid(axis="x", alpha=0.3)
+    plt.tight_layout()
+    plt.show()
+
+
+
+
+def regression_exposition2(df, target="score_exposition", categorical_vars=None, reference_dict=None):
+    """
+    Régression logistique ordinale sur un score discret (0-4) avec covariables qualitatives.
+    
+    Parameters
+    ----------
+    df : pd.DataFrame
+        DataFrame contenant les données.
+    target : str
+        Variable dépendante ordinale.
+    categorical_vars : list of str
+        Liste de variables qualitatives à inclure.
+    reference_dict : dict
+        Dictionnaire de références pour chaque variable qualitative.
+
+    Returns
+    -------
+    df_coef : pd.DataFrame
+        Coefficients avec noms simplifiés.
+    res : statsmodels OrderedModelResults
+        Résultat du modèle pour analyses supplémentaires.
+    """
+    # Nettoyage des colonnes et NA
+    cols = [target] + (categorical_vars if categorical_vars else [])
+    df_clean = df[cols].dropna().copy()
+    
+    # Convertir le score en int (obligatoire pour OrderedModel)
+    df_clean[target] = df_clean[target].astype(int)
+    
+    # Normaliser les colonnes (remplacer espaces/accents pour get_dummies)
+    for var in categorical_vars:
+        df_clean[var] = df_clean[var].astype(str).str.replace(" ", "_")
+    
+    # Création des dummies
+    df_dummies = pd.get_dummies(df_clean, columns=categorical_vars, drop_first=False)
+    
+    # Supprimer les colonnes de référence
+    if reference_dict:
+        for var, ref in reference_dict.items():
+            ref_col = f"{var}_{ref.replace(' ', '_')}"
+            if ref_col in df_dummies.columns:
+                df_dummies = df_dummies.drop(columns=[ref_col])
+    
+    X = df_dummies.drop(columns=[target])
+    y = df_dummies[target]
+    
+    # Ajustement du modèle ordinal
+    mod = OrderedModel(y, X, distr='logit')
+    res = mod.fit(method='bfgs', disp=False)
+    
+    # Création du DataFrame des coefficients
+    df_coef = pd.DataFrame({
+        'variable': X.columns.str.replace("_", ": ", regex=False),
+        'coef': res.params.values[:X.shape[1]]
+    })
+    
+    return df_coef, res
+
+
+def plot_regression_exposition2(df_coef, title="Effets sur le score d'exposition"):
+    """
+    Trace les coefficients d'un modèle ordinal.
+    """
+    plt.figure(figsize=(8, 6))
+    y_pos = np.arange(len(df_coef))
+    plt.barh(y_pos, df_coef['coef'], color='steelblue')
+    plt.yticks(y_pos, df_coef['variable'])
+    plt.axvline(0, color='red', linestyle='--', alpha=0.7)
+    plt.xlabel("Effet marginal log-odds")
+    plt.title(title)
     plt.tight_layout()
     plt.show()
