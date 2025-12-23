@@ -82,6 +82,7 @@ def plot_hosp_year(df, year=2020):
         + xlab("Date")
         + ylab("Nb hospitalisations")
         + theme_minimal()
+        + ggsize(800, 400)
     )
 
     return p
