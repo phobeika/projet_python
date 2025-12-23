@@ -30,15 +30,6 @@ def import_hosp(
     raise RuntimeError("❌ L'importation a échoué depuis les deux sources.")
 
 
-
-
-from lets_plot import *
-import pandas as pd
-
-
-from lets_plot import *
-import pandas as pd
-
 def plot_hosp_year(df, year=2020):
     """
     Filtre par année (par défaut 2020), vérifie la cohérence des données (même nombre de départements chaque jour),
@@ -161,19 +152,24 @@ def plot_abs_hosp_by_quarter_base100(df_abs, df_daily, year=2020):
     return df_trim_abs, df_trim_hosp
 
 
-def plot_hosp_arrets_trim(df_eec, df_daily):
+def plot_hosp_arrets_trim(df_eec, df_daily, year = 2020):
     """
-    Traite les données d'enquête emploi et d'hospitalisation pour 2020,
+    Traite les données d'enquête emploi et d'hospitalisation pour une année (par défaut 2020),
     calcule les agrégats par trimestre et affiche un graphique à double axe.
     
     arguments:
         df_eec (pd.DataFrame): DataFrame contenant l'enquête emploi (colonne 'RABS', 'TRIM')
         df_daily (pd.DataFrame): DataFrame contenant les données hospitalières (colonne 'date', 'hosp')
-    
+        year : l'année pour laquelle on fait l'analyse
     outputs:
         pd.DataFrame: Le dataframe fusionné utilisé pour le graphique.
     """
     
+    # --- 0. On s'assure que df_eec contient bien l'année 'year'
+    df_eec = df_eec[df_eec['ANNEE'] == year].copy()
+    if df_eec.empty:
+        raise ValueError(f"Aucune donnée trouvée pour l'année {year}")
+
     # --- 1. Traitement des Arrêts Maladie (Source: EEC) ---
     # On ne compte que les absences pour congé maladie (RABS = '2')
     df_rabs2 = df_eec[df_eec['RABS'] == '2'].copy()
@@ -196,14 +192,14 @@ def plot_hosp_arrets_trim(df_eec, df_daily):
     df_daily_clean['year'] = df_daily_clean['date'].dt.year
     df_daily_clean['month'] = df_daily_clean['date'].dt.month
     
-    # Filtrage sur 2020
-    df_daily_2020 = df_daily_clean[df_daily_clean['year'] == 2020]
+    # Filtrage sur year
+    df_daily_year = df_daily_clean[df_daily_clean['year'] == year]
 
     # Calcul spécifique des trimestres (selon votre logique : T1 = Mars uniquement)
-    t1 = df_daily_2020[df_daily_2020['month'] == 3]['hosp'].sum()
-    t2 = df_daily_2020[df_daily_2020['month'].isin([4, 5, 6])]['hosp'].sum()
-    t3 = df_daily_2020[df_daily_2020['month'].isin([7, 8, 9])]['hosp'].sum()
-    t4 = df_daily_2020[df_daily_2020['month'].isin([10, 11, 12])]['hosp'].sum()
+    t1 = df_daily_year[df_daily_year['month'] == 3]['hosp'].sum()
+    t2 = df_daily_year[df_daily_year['month'].isin([4, 5, 6])]['hosp'].sum()
+    t3 = df_daily_year[df_daily_year['month'].isin([7, 8, 9])]['hosp'].sum()
+    t4 = df_daily_year[df_daily_year['month'].isin([10, 11, 12])]['hosp'].sum()
 
     df_hosp_trim = pd.DataFrame({
         "TRIM": ["T1", "T2", "T3", "T4"],
@@ -242,7 +238,7 @@ def plot_hosp_arrets_trim(df_eec, df_daily):
     ax2.plot(df_fusionne['TRIM'], df_fusionne['Effectifs'], color=color_eff, marker='^', linewidth=2, label='Arrêts maladie')
     ax2.tick_params(axis='y', labelcolor=color_eff)
 
-    plt.title('Hospitalisations liées au Covid-19 et arrêts maladie en 2020')
+    plt.title(f'Hospitalisations liées au Covid-19 et arrêts maladie en {year}')
     plt.show()
     
     correlation = df_fusionne[['hosp', 'Effectifs']].corr().iloc[0, 1]
