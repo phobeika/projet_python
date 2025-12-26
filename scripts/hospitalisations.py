@@ -1,6 +1,6 @@
 import requests
 import pandas as pd
-from lets_plot import lp
+import lets_plot as lp
 import matplotlib.pyplot as plt
 
 
