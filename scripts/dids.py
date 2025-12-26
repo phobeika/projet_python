@@ -36,7 +36,7 @@ def data_prep(df, min_obs):
 
 
 # Estimation de la double-différences statistique
-def estimation_statique(df, traitement):
+def estimation_statique(df, traitement, tableau=False):
     """
     Cette fonction estime un modèle de Différence-in-Différences (DiD) canonique avec 
     des effets fixes par groupe et année (Two-Way Fixed Effects).
@@ -44,6 +44,9 @@ def estimation_statique(df, traitement):
     Arguments :
         - df : le dataframe contenant les données au format long ;
         - traitement : le nom de la variable de traitement (variable indicatrice).
+        - tableau : booléen.
+        Si True, affiche le tableau complet.
+        Si False, affiche une phrase de synthèse.
 
     Output : tableau de résultat
     """
@@ -67,13 +70,22 @@ def estimation_statique(df, traitement):
     # Estimation avec erreurs-types clusterisées (Robustes à l'autocorrélation intra-groupe)
     resultat = modele.fit(cov_type='clustered', cluster_entity=True)
 
-    # Résultat
-    print(resultat.summary)
-    return resultat
+    if tableau:
+        print(resultat.summary)
+    else:
+        coef = resultat.params[traitement]
+        pval = resultat.pvalues[traitement]
+        ic = resultat.conf_int().loc[traitement]
+        lower = ic['lower']
+        upper = ic['upper']
+
+        print(f"L'effet estimé est de {coef:.4f}, avec un intervalle de confiance à 95 % de [{lower:.4f}, {upper:.4f}]\n et une p-valeur associée de {pval:.4f}.")
+
+    #return resultat
 
 
 # Estimation de la double-différences dynamique
-def estimation_dynamique(df, interaction_cols):
+def estimation_dynamique(df, interaction_cols, verbose=False):
     """
     Cette fonction estime le modèle d'étude d'événement.
     
@@ -104,14 +116,17 @@ def estimation_dynamique(df, interaction_cols):
     resultat = modele.fit(cov_type='clustered', cluster_entity=True)
 
     # Résultat
-    print(resultat.summary)
+    if verbose:
+        print(resultat.summary)
+
     return resultat
 
 
 # Représentation graphique de l'étude d'évènement
 def plot_event_study(resultat):
     """
-    Trace le graphique des coefficients de l'étude d'évènement à partir du résultat de estimation_dynamique
+    Cette fonction trace le graphique des coefficients de l'étude d'évènement
+    à partir du résultat de {estimation_dynamique}
 
     Argument : le dataset produit par "estimation_dynamique"
 

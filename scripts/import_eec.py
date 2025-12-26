@@ -108,14 +108,14 @@ def read_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
             raise RuntimeError(f"Erreur : {e}")
 
 
-# 
+# Conversion au format catégoriel
 def convert_to_categorical(df, var):
     df[var] = pd.to_numeric(df[var], errors='coerce').astype('Int64')
     df[var] = df[var].astype('category')
     return df
 
 
-# 
+# Recodage des variables
 def recodages(df, vars_cat, vars_num):
     # Normaliser les colonnes avec des problèmes de type mixte (ex: "2.0" vs 2.0)
     # On convertit d'abord en numérique pour nettoyer, puis en catégories si nécessaire
@@ -172,7 +172,6 @@ cse_map = {
     "81": "Chômeurs n’ayant jamais travaillé"
 }
 
-
 naf_map = {
     "": "Sans objet (inactifs occupés)",
     "00": "Non renseigné",
@@ -224,7 +223,7 @@ pub_map = {
 }
 
 
-# 
+# Ajout des labels
 def add_labels(df):
     df = df.copy()
     # --------------------

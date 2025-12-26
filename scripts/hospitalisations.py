@@ -7,7 +7,8 @@ import matplotlib.pyplot as plt
 # Import des données d'hospitalisation depuis Santé Publique France
 def import_hosp(url_main, url_backup):
     """
-    Cette fonction  importe les données d'hospitalisations depuis le site de Santé publique France
+    Cette fonction  importe les données d'hospitalisations depuis le site de
+    Santé publique France
 
     Arguments :
         - url_main : url principal pour accéder aux données ;
@@ -120,12 +121,16 @@ def plot_hosp_year(df, year=2020):
 def plot_hosp_arrets_trim(df_eec, df_daily, year=2020):
     """
     Cette fonction :
-        - traite les données d'enquête emploi et d'hospitalisation pour une année (par défaut 2020) ;
-        - calcule les agrégats par trimestre et affiche un graphique à deux axes des ordonnées.
+        - traite les données d'enquête emploi et d'hospitalisation pour une
+        année (par défaut 2020) ;
+        - calcule les agrégats par trimestre et affiche un graphique à deux
+        axes des ordonnées.
 
     Arguments:
-        - df_eec : dataset en entrée contenant l'enquête emploi (colonne 'RABS', 'TRIM')
-        - df_daily : dataframe contenant les données hospitalières (colonne 'date', 'hosp')
+        - df_eec : dataset en entrée contenant l'enquête emploi (colonne 'RABS',
+        'TRIM')
+        - df_daily : dataframe contenant les données hospitalières (colonne
+        'date', 'hosp')
         - year : l'année pour laquelle on fait l'analyse
     
     Outputs:

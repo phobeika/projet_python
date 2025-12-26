@@ -594,12 +594,12 @@ def plot_freq_exposition(df, score_col="score_exposition", by="SEXE", labels=Non
                 "Employés"
             ],
             "colors": [
-                "#EDC948",
-                "#E15759",
-                "#59A14F",
-                "#F28E2B",
-                "#B07AA1",
-                "#4E79A7"
+                "#2F2066",
+                "#543BB3",
+                "#7A57FF",
+                "#997DFF",
+                "#AF94FF",
+                "#C5B4FF"
             ]
         },
         "SEXE_label": {
@@ -608,9 +608,9 @@ def plot_freq_exposition(df, score_col="score_exposition", by="SEXE", labels=Non
                 "Homme"
             ],
             "colors": [
-                "#CABCFF",
-                "#4E79A7"
-            ]  # ou ["#E15759","#4E79A7"]
+                "#C869FF",
+                "#7A57FF"
+            ]
         },
         "PUB_label": {
             "order": [
