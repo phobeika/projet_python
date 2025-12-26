@@ -6,26 +6,27 @@ from zipfile import ZipFile
 import tempfile
 import os
 
+
 def read_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
     """
-    Télécharge un ZIP ou un fichier direct depuis une URL, lit un fichier CSV 
+    Télécharge un ZIP ou un fichier direct depuis une URL, lit un fichier CSV
     ou DBF à l'intérieur et l'importe sous la forme d'un dataframe Pandas
-    
+
     Paramètres :
     - url : URL du fichier (ZIP ou direct CSV/DBF)
     - backup_url : URL de secours à utiliser en cas d'échec
     - filename_keyword : mot-clé pour filtrer le CSV à ouvrir (facultatif, pour ZIP)
     - kwargs : paramètres additionnels passés à pd.read_csv
-    
+
     Retour :
     - DataFrame pandas
     """
-    
+
     def try_read(url):
         """Sous-fonction : essaye de lire un fichier depuis une URL donnée"""
         response = requests.get(url)
         response.raise_for_status()  # lèvera une erreur si le téléchargement échoue
-        
+
         if url.endswith('.zip'):
             # Traitement pour ZIP
             zip_bytes = BytesIO(response.content)
@@ -40,7 +41,8 @@ def read_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
                     if len(files) == 0:
                         raise ValueError(f"Aucun CSV contenant '{filename_keyword}' trouvé à {url}")
                     elif len(files) > 1:
-                        raise ValueError(f"Plusieurs CSV contiennent '{filename_keyword}' à {url}: {files}")
+                        raise ValueError(f"Plusieurs CSV contiennent \
+                            '{filename_keyword}'à {url}: {files}")
 
                 # Choix du fichier le plus gros si pas de mot clé
                 if len(files) > 1:
@@ -54,7 +56,7 @@ def read_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
                 if selected.endswith(".csv"):
                     with myzip.open(selected) as file:
                         return pd.read_csv(file, **kwargs)
-                
+
                 # ---- Lecture DBF ----
                 if selected.endswith(".dbf"):
                     with tempfile.NamedTemporaryFile(delete=False, suffix=".dbf") as tmp:
@@ -84,7 +86,7 @@ def read_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
                 finally:
                     os.remove(tmp_path)
             else:
-                raise ValueError(f"Type de fichier non supporté pour {url}. Supporte .zip, .csv, .dbf.")
+                raise ValueError(f"Type de fichier non supporté pour {url}.")
 
     # ---- Tentative principale ----
     try:
@@ -103,20 +105,21 @@ def read_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
                 )
         else:
             raise RuntimeError(f"Erreur : {e}")
-        
+
 
 def convert_to_categorical(df, var):
-    df[var] = pd.to_numeric(df[var], errors = 'coerce').astype('Int64')
+    df[var] = pd.to_numeric(df[var], errors='coerce').astype('Int64')
     df[var] = df[var].astype('category')
     return df
 
-def recodages(df, vars_cat, vars_num):   
+
+def recodages(df, vars_cat, vars_num):
     # Normaliser les colonnes avec des problèmes de type mixte (ex: "2.0" vs 2.0)
     # On convertit d'abord en numérique pour nettoyer, puis en catégories si nécessaire
     for col in vars_cat:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce').astype('Int64').astype(str)
-    
+
     for col in vars_num:
         if col in df.columns:
             df[col] = pd.to_numeric(df[col], errors='coerce').astype(int)
@@ -218,37 +221,29 @@ pub_map = {
 }
 
 
-
 def add_labels(df):
     df = df.copy()
-    
     # --------------------
-    # SEXE 
+    # SEXE
     # --------------------
     if "SEXE" in df.columns:
         df["SEXE_label"] = df["SEXE"].map(sexe_map)
-    
     # PUB3FP
     # --------------------
     if "PUB3FP" in df.columns:
         df["PUB_label"] = df["PUB3FP"].map(pub_map)
-    
     # --------------------
-    # CSE + CSE_label 
-    # --------------------
+    # CSE + CSE_label
+    #     # --------------------
     if "CSE" in df.columns:
         df["CSE_label"] = df["CSE"].map(cse_map)
-
         # --------------------
         # AJOUT : CSER
         # --------------------
         # On travaille sur une version nettoyée uniquement pour CSER
         cse_clean = pd.to_numeric(df["CSE"], errors="coerce").astype("Int64")
-
         cse_first_digit = cse_clean.astype(str).str[0]
-
         cser_map = {
-         
             "1": 1,
             "2": 2,
             "3": 3,
@@ -257,11 +252,9 @@ def add_labels(df):
             "6": 6,
             "8": 8
         }
-
         df["CSER"] = cse_first_digit.map(cser_map)
-
         cser_labels = {
-                        1: "Agriculteurs exploitants",
+            1: "Agriculteurs exploitants",
             2: "Artisans, commerçants et chefs d'entreprise",
             3: "Cadres et professions intellectuelles supérieures",
             4: "Professions intermédiaires",
@@ -269,16 +262,10 @@ def add_labels(df):
             6: "Ouvriers",
             8: "Chômeurs n'ayant jamais travaillé"
         }
-
         df["CSER_label"] = df["CSER"].map(cser_labels)
-    
     # --------------------
-    # NAF 
+    # NAF
     # --------------------
     if "NAFG038UN" in df.columns:
         df["NAF_label"] = df["NAFG038UN"].map(naf_map)
-    
     return df
-
-
-

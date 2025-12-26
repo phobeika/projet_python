@@ -2,6 +2,7 @@
 import pandas as pd
 from scripts import import_eec
 
+
 def load_eec_all(years=None, core_vars=None, use_backup=False):
     """
     Télécharge et concatène les fichiers EEC 2010-2024 depuis l'INSEE (avec backup optionnel)
@@ -9,10 +10,12 @@ def load_eec_all(years=None, core_vars=None, use_backup=False):
     par défaut l'ensemble des colonnes communes à toutes les années.
 
     Paramètres :
-    - years : liste ou range des années à importer (entre 2010 et 2024). Si None, toutes les années 2010-2024 sont importées.
+    - years : liste ou range des années à importer (entre 2010 et 2024).
+        Si None, toutes les années 2010-2024 sont importées.
     - core_vars : liste de colonnes à conserver. Si None, on utilisera toutes les colonnes communes.
-    - use_backup : bool, si True, utilise les URLs de secours comme principales (utile si les principales sont indisponibles).
-    
+    - use_backup : bool, si True, utilise les URLs de secours comme principales
+        (utile si les principales sont indisponibles).
+
     Retour :
     - pandas DataFrame
     """
@@ -69,22 +72,21 @@ def load_eec_all(years=None, core_vars=None, use_backup=False):
     for year in years:
         sep = ";" if year >= 2018 else None  # CSV plus récent utilise ;
         df = import_eec.read_from_zip(urls[year], backup_url=backups[year], sep=sep)
-        
 
         # Renommage de variables pour harmoniser les noms entre années
         if year in [2010, 2011, 2012]:
             df = df.rename(columns={'NAFG38UN': 'NAFG038UN'})
         if year in [2021, 2022]:
             df = df.rename(columns={'PCS2': 'CSE'})
-        if year in [2023, 2024]:    
+        if year in [2023, 2024]:
             df = df.rename(columns={'APCS2': 'CSE'})
-        
+
         # Vérification des colonnes CSE et NAF
         # cse_cols = [c for c in df.columns if 'CS' in c.upper()]
         # naf_cols = [c for c in df.columns if 'NAFG038UN' in c.upper()]
         # print(f"Year {year}: CS columns: {cse_cols}")
         # print(f"Year {year}: NAFG038UN columns: {naf_cols}")
-        
+
         print(df.columns.tolist())
 
         dfs.append(df)

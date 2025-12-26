@@ -2,8 +2,6 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import statsmodels.formula.api as smf
-import statsmodels.api as sm
-from patsy.contrasts import Treatment
 
 # Dictionnaire de recodage CSE → label texte
 
@@ -130,6 +128,7 @@ naf_map = {
     "UZ": "Activités extra-territoriales"
 }
 
+
 def exposition(df, var="CSE", year=None, year_col="ANNEE"):
     """
     Renvoie la proportion d'individus ayant déclaré un arrêt maladie (RABS == 2)
@@ -170,20 +169,20 @@ def exposition(df, var="CSE", year=None, year_col="ANNEE"):
 
     if var == "CSE":
         df_prop["label"] = df_prop.index.map(cse_map)
-        df_prop = df_prop.reset_index().rename(columns={'index': var})[['label', var, 'effectif_total', 'effectif_rabs2', 'proportion_rabs2']]
+        df_prop = df_prop.reset_index().rename(columns={'index': var})[
+            ['label', var, 'effectif_total', 'effectif_rabs2', 'proportion_rabs2']]
 
     if var == "NAFG038UN":
         df_prop["label"] = df_prop.index.map(naf_map)
-        df_prop = df_prop.reset_index().rename(columns={'index': var})[['label', var, 'effectif_total', 'effectif_rabs2', 'proportion_rabs2']]
-    
+        df_prop = df_prop.reset_index().rename(columns={'index': var})[
+            ['label', var, 'effectif_total', 'effectif_rabs2', 'proportion_rabs2']]
+
     if var == "SEXE":
         df_prop["label"] = df_prop.index.map(sexe_map)
-        df_prop = df_prop.reset_index().rename(columns={'index': var})[['label', var, 'effectif_total', 'effectif_rabs2', 'proportion_rabs2']]
-    
+        df_prop = df_prop.reset_index().rename(columns={'index': var})[
+            ['label', var, 'effectif_total', 'effectif_rabs2', 'proportion_rabs2']]
+
     return df_prop.sort_values("proportion_rabs2", ascending=False)
-
-
-
 
 
 def exposition_annee(df, var="SEXE", year_col="ANNEE", annee=None):
@@ -195,7 +194,6 @@ def exposition_annee(df, var="SEXE", year_col="ANNEE", annee=None):
 
     if year_col not in df.columns:
         raise ValueError(f"La colonne '{year_col}' est absente du DataFrame.")
-
 
     # Filtrage sur l'année si demandé
     if annee is not None:
@@ -234,39 +232,44 @@ def exposition_annee(df, var="SEXE", year_col="ANNEE", annee=None):
 
 def exposition_diff(df, var="CSE", year1=None, year2=None, year_col="ANNEE"):
     """
-    Compute the difference in proportion of RABS == 2 between year2 and year1 
+    Compute the difference in proportion of RABS == 2 between year2 and year1
     for each modality of var.
-    
+
     Returns a DataFrame with columns: var, year1_prop, year2_prop, difference
     Sorted by difference descending.
     """
     if year1 is None or year2 is None:
         raise ValueError("Provide year1 and year2")
-    
+
     # Get proportions for each year using exposition()
     df1 = exposition(df, var=var, year=year1)
     df2 = exposition(df, var=var, year=year2)
-    
+
     # Ensure var is a column
     df1 = df1.reset_index().rename(columns={'index': var}) if var not in df1.columns else df1
     df2 = df2.reset_index().rename(columns={'index': var}) if var not in df2.columns else df2
-    
+
     # Add labels if available
     label_maps = {"CSE": cse_map, "SEXE": sexe_map, "NAFG038UN": naf_map}
     if var in label_maps:
         df1['label'] = df1[var].map(label_maps[var])
         df2['label'] = df2[var].map(label_maps[var])
-    
+
     # Rename proportion columns
     df1 = df1.rename(columns={'proportion_rabs2': f'prop_{year1}'})
     df2 = df2.rename(columns={'proportion_rabs2': f'prop_{year2}'})
-    
+
     # Merge on var
-    merged = pd.merge(df1[[var, f'prop_{year1}']], df2[[var, f'prop_{year2}']], on=var, how='outer').fillna(0)
-    
+    merged = pd.merge(
+        df1[[var, f'prop_{year1}']],
+        df2[[var, f'prop_{year2}']],
+        on=var,
+        how='outer'
+        ).fillna(0)
+
     # Compute difference
     merged['difference'] = merged[f'prop_{year2}'] - merged[f'prop_{year1}']
-    
+
     # Add labels if present
     if 'label' in df1.columns:
         labels = df1.set_index(var)['label']
@@ -275,18 +278,19 @@ def exposition_diff(df, var="CSE", year1=None, year2=None, year_col="ANNEE"):
 
     else:
         merged = merged[[var, f'prop_{year1}', f'prop_{year2}', 'difference']]
-    
+
     return merged.sort_values("difference", ascending=False)
+
 
 def score_exposition(df, var_list, year1=2019, year2=2020, year_col="ANNEE"):
     """
     Calcule un score d'exposition cumulée.
-    
+
     Pour chaque variable de var_list :
     - calcule la différence d'exposition (RABS==2) entre year2 et year1
     - classe les modalités en terciles d'exposition
     - attribue un score 0 (faible), 1 (moyen), 2 (élevé)
-    
+
     Le score final est la somme des scores par variable.
     """
 
@@ -392,13 +396,12 @@ def plot_evolution_proportion(
     plt.show()
 
 
-
 def plot_score_exposition(
     df,
     score_col="score_exposition",
     by=None,
     labels=None,
-    figsize=(8,5),
+    figsize=(8, 5),
     title=None
 ):
 
@@ -509,7 +512,6 @@ def plot_score_exposition(
     plt.show()
 
 
-
 def plot_freq_exposition(
     df,
     score_col="score_exposition",
@@ -543,24 +545,24 @@ def plot_freq_exposition(
                 "#E15759",
                 "#59A14F",
                 "#F28E2B",
-                
+
                 "#B07AA1",
-                "#4E79A7" 
+                "#4E79A7"
             ]
         },
         "SEXE_label": {
             "order": ["Femme", "Homme"],
-            "colors": ["#CABCFF","#4E79A7"] # ou ["#E15759","#4E79A7"]
+            "colors": ["#CABCFF", "#4E79A7"]  # ou ["#E15759","#4E79A7"]
         },
         "PUB_label": {
             "order": [
-                "Hôpitaux publics", "État", "Collectivités locales","Secteur privé"
+                "Hôpitaux publics", "État", "Collectivités locales", "Secteur privé"
             ],
             "colors": [
                 "#A7D1FF",
                 "#E9C3FF",
                 "#CABCFF",
-                
+
                 "#D3D3D3"
             ]
         }
@@ -631,8 +633,12 @@ def plot_freq_exposition(
     plt.show()
 
 
-
-def regression_exposition(df, target="score_exposition", categorical_vars=None, reference_dict=None):
+def regression_exposition(
+    df,
+    target="score_exposition",
+    categorical_vars=None,
+    reference_dict=None
+):
     """
     Effectue une régression linéaire OLS avec covariance robuste (HC3) sur un dataframe.
     Retourne un DataFrame avec coefficients, intervalles de confiance et p-values,
@@ -641,7 +647,7 @@ def regression_exposition(df, target="score_exposition", categorical_vars=None, 
     # On conserve seulement les colonnes nécessaires et on supprime les NA
     cols = [target] + (categorical_vars if categorical_vars else [])
     df_clean = df[cols].dropna()
-    
+
     # Construction de la formule
     formula_terms = []
     for var in categorical_vars:
@@ -650,11 +656,11 @@ def regression_exposition(df, target="score_exposition", categorical_vars=None, 
         else:
             formula_terms.append(f'C({var})')
     formula = f"{target} ~ " + " + ".join(formula_terms)
-    
+
     # Ajustement du modèle OLS
     modele = smf.ols(formula=formula, data=df_clean).fit()
     modele_robust = modele.get_robustcov_results(cov_type="HC3")
-    
+
     # Extraction des coefficients et statistiques
     coef = modele_robust.params
     conf = modele_robust.conf_int()
@@ -682,15 +688,16 @@ def regression_exposition(df, target="score_exposition", categorical_vars=None, 
         else:
             cleaned_names.append(name)
     df_coef['variable'] = cleaned_names
-    
+
     return df_coef, modele_robust
 
 
-
-def plot_regression_exposition(df_coef, title="Représentation graphique des coefficients de la régression du score d'exposition"):
+def plot_regression_exposition(
+    df_coef,
+        title="Représentation graphique des coefficients de la régression du score d'exposition"):
     """
     Trace les coefficients d'une régression avec intervalles de confiance.
-    
+
     Parameters:
     -----------
     df_coef : pd.DataFrame
@@ -700,7 +707,7 @@ def plot_regression_exposition(df_coef, title="Représentation graphique des coe
     """
     plt.figure(figsize=(8, 6))
     y_pos = np.arange(len(df_coef))
-    
+
     plt.errorbar(
         df_coef["coef"], y_pos,
         xerr=[df_coef["coef"] - df_coef["ci_low"], df_coef["ci_high"] - df_coef["coef"]],
@@ -715,12 +722,15 @@ def plot_regression_exposition(df_coef, title="Représentation graphique des coe
     plt.show()
 
 
-
-
-def regression_exposition2(df, target="score_exposition", categorical_vars=None, reference_dict=None):
+def regression_exposition2(
+    df,
+    target="score_exposition",
+    categorical_vars=None,
+    reference_dict=None
+):
     """
     Régression logistique ordinale sur un score discret (0-4) avec covariables qualitatives.
-    
+
     Parameters
     ----------
     df : pd.DataFrame
@@ -742,37 +752,37 @@ def regression_exposition2(df, target="score_exposition", categorical_vars=None,
     # Nettoyage des colonnes et NA
     cols = [target] + (categorical_vars if categorical_vars else [])
     df_clean = df[cols].dropna().copy()
-    
+
     # Convertir le score en int (obligatoire pour OrderedModel)
     df_clean[target] = df_clean[target].astype(int)
-    
+
     # Normaliser les colonnes (remplacer espaces/accents pour get_dummies)
     for var in categorical_vars:
         df_clean[var] = df_clean[var].astype(str).str.replace(" ", "_")
-    
+
     # Création des dummies
     df_dummies = pd.get_dummies(df_clean, columns=categorical_vars, drop_first=False)
-    
+
     # Supprimer les colonnes de référence
     if reference_dict:
         for var, ref in reference_dict.items():
             ref_col = f"{var}_{ref.replace(' ', '_')}"
             if ref_col in df_dummies.columns:
                 df_dummies = df_dummies.drop(columns=[ref_col])
-    
+
     X = df_dummies.drop(columns=[target])
     y = df_dummies[target]
-    
+
     # Ajustement du modèle ordinal
     mod = OrderedModel(y, X, distr='logit')
     res = mod.fit(method='bfgs', disp=False)
-    
+
     # Création du DataFrame des coefficients
     df_coef = pd.DataFrame({
         'variable': X.columns.str.replace("_", ": ", regex=False),
         'coef': res.params.values[:X.shape[1]]
     })
-    
+
     return df_coef, res
 
 
