@@ -363,7 +363,7 @@ def score_exposition(df, var_list, year1=2019, year2=2020, year_col="ANNEE"):
     return df
 
 
-def plot_evolution_proportion(df, year_col, group_col, value_col, title, ylabel, colors):
+def plot_evolution_proportion(df, year_col, group_col, value_col, title, ylabel, colors=None):
     """
     Cette fonction trace l'évolution d'une variable quantitative en fonction du temps,
     avec une courbe par modalité d'une variable de groupe.
@@ -399,7 +399,7 @@ def plot_evolution_proportion(df, year_col, group_col, value_col, title, ylabel,
     plt.ylabel(ylabel if ylabel else value_col)
     plt.title(title if title else f"Évolution de {value_col} selon {group_col}")
     plt.legend()
-    plt.grid(True)
+    plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.show()
 
@@ -452,8 +452,13 @@ def plot_score_exposition(df, score_col="score_exposition", by=None, labels=None
         effectifs = df[score_col].value_counts().sort_index()
         frequences = effectifs / effectifs.sum() * 100
 
-        plt.figure(figsize=(8, 5))
-        bars = plt.bar(effectifs.index, effectifs.values, edgecolor="black")
+        plt.figure(figsize=(10, 6))
+        bars = plt.bar(
+            effectifs.index,
+            effectifs.values, 
+            edgecolor="#7A57FF", 
+            color="#7A57FF"
+            )
 
         for bar, pct in zip(bars, frequences):
             plt.text(
@@ -501,7 +506,7 @@ def plot_score_exposition(df, score_col="score_exposition", by=None, labels=None
 
     table = pd.crosstab(df_plot[score_col], df_plot[by])
 
-    plt.figure(figsize=(8, 5))
+    plt.figure(figsize=(10, 6))
     bottom = np.zeros(len(table))
 
     for col in table.columns:
@@ -718,13 +723,17 @@ def plot_regression_exposition(df_coef):
     title : str
         Titre du graphique.
     """
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(10, 3))
     y_pos = np.arange(len(df_coef))
 
     plt.errorbar(
-        df_coef["coef"], y_pos,
+        df_coef["coef"],
+        y_pos,
         xerr=[df_coef["coef"] - df_coef["ci_low"], df_coef["ci_high"] - df_coef["coef"]],
-        fmt='o', color='black', ecolor='steelblue', capsize=4
+        fmt='o',
+        color="#7A57FF",
+        ecolor="#7A57FF",
+        capsize=4
     )
     plt.axvline(0, color='red', linestyle='--', alpha=0.7)
     plt.yticks(y_pos, df_coef["variable"])
@@ -798,9 +807,9 @@ def plot_regression_exposition2(df_coef, title="Effets sur le score d'exposition
     """
     Trace les coefficients d'un modèle ordinal.
     """
-    plt.figure(figsize=(8, 6))
+    plt.figure(figsize=(10, 6))
     y_pos = np.arange(len(df_coef))
-    plt.barh(y_pos, df_coef['coef'], color='steelblue')
+    plt.barh(y_pos, df_coef['coef'], color="#7A57FF")
     plt.yticks(y_pos, df_coef['variable'])
     plt.axvline(0, color='red', linestyle='--', alpha=0.7)
     plt.xlabel("Effet marginal log-odds")
