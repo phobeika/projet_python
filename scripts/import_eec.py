@@ -7,19 +7,20 @@ import tempfile
 import os
 
 
+# 
 def read_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
     """
     Télécharge un ZIP ou un fichier direct depuis une URL, lit un fichier CSV
     ou DBF à l'intérieur et l'importe sous la forme d'un dataframe Pandas
 
-    Paramètres :
-    - url : URL du fichier (ZIP ou direct CSV/DBF)
-    - backup_url : URL de secours à utiliser en cas d'échec
-    - filename_keyword : mot-clé pour filtrer le CSV à ouvrir (facultatif, pour ZIP)
-    - kwargs : paramètres additionnels passés à pd.read_csv
+    Arguments :
+        - url : URL du fichier (ZIP ou direct CSV/DBF) ;
+        - backup_url : URL de secours à utiliser en cas d'échec ;
+        - filename_keyword : mot-clé pour filtrer le CSV à ouvrir (facultatif, pour ZIP) ;
+        - kwargs : paramètres additionnels passés à pd.read_csv.
 
-    Retour :
-    - DataFrame pandas
+    Output :
+        - dataframe obtenu.
     """
 
     def try_read(url):
@@ -107,12 +108,14 @@ def read_from_zip(url, backup_url=None, filename_keyword=None, **kwargs):
             raise RuntimeError(f"Erreur : {e}")
 
 
+# 
 def convert_to_categorical(df, var):
     df[var] = pd.to_numeric(df[var], errors='coerce').astype('Int64')
     df[var] = df[var].astype('category')
     return df
 
 
+# 
 def recodages(df, vars_cat, vars_num):
     # Normaliser les colonnes avec des problèmes de type mixte (ex: "2.0" vs 2.0)
     # On convertit d'abord en numérique pour nettoyer, puis en catégories si nécessaire
@@ -221,6 +224,7 @@ pub_map = {
 }
 
 
+# 
 def add_labels(df):
     df = df.copy()
     # --------------------

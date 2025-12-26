@@ -3,31 +3,32 @@ import pandas as pd
 from scripts import import_eec
 
 
+# Import des données EEC
 def load_eec_all(years=None, core_vars=None, use_backup=False):
     """
-    Télécharge et concatène les fichiers EEC 2010-2024 depuis l'INSEE (avec backup optionnel)
-    et retourne un DataFrame pandas contenant uniquement les colonnes demandées (core_vars), ou
-    par défaut l'ensemble des colonnes communes à toutes les années.
+    Cette fonction télécharge et concatène les fichiers EEC 2010-2024 depuis l'INSEE
+    (avec un backup optionnel) et retourne un dataframe contenant uniquement les colonnes
+    demandées (core_vars), ou par défaut l'ensemble des colonnes communes à toutes les années.
 
-    Paramètres :
-    - years : liste ou range des années à importer (entre 2010 et 2024).
-        Si None, toutes les années 2010-2024 sont importées.
-    - core_vars : liste de colonnes à conserver. Si None, on utilisera toutes les colonnes communes.
-    - use_backup : bool, si True, utilise les URLs de secours comme principales
-        (utile si les principales sont indisponibles).
+    Arguments :
+        - years : liste ou étendue des années à importer (entre 2010 et 2024).
+        Si None, toutes les années 2010-2024 sont importées ;
+        - core_vars : liste de colonnes à conserver.
+        Si None, on utilisera toutes les colonnes communes ;
+        - use_backup : indicatrice pour utiliser les URLs de secours.
 
-    Retour :
-    - pandas DataFrame
+    Output :
+        - eec_all : le dataset obtenu
     """
 
-    # Si aucun argument `years` n'a été indiqué
+    # Si aucun argument {years} n'a été indiqué
     if years is None:
         years = range(2010, 2025)
 
     # Filtre pour s'assurer que les années indiquées sont bien entre 2010 et 2024
     years = [y for y in years if 2010 <= y <= 2024]
 
-    # URLs principales
+    # Liste des URLs principales
     urls = {
         2010: "https://www.insee.fr/fr/statistiques/fichier/2415256/eec10_dbase.zip",
         2011: "https://www.insee.fr/fr/statistiques/fichier/2415227/eec11_dbase.zip",
@@ -46,7 +47,7 @@ def load_eec_all(years=None, core_vars=None, use_backup=False):
         2024: "https://www.insee.fr/fr/statistiques/fichier/8632441/FD_csv_EEC_2024.zip"
     }
 
-    # URLs backup
+    # Liste des URLs de secours
     backups = {
         2010: "https://minio.lab.sspcloud.fr/phobeika/open_eec/FD_EEC_2010.dbf",
         2011: "https://minio.lab.sspcloud.fr/phobeika/open_eec/FD_EEC_2011.dbf",
@@ -101,4 +102,5 @@ def load_eec_all(years=None, core_vars=None, use_backup=False):
     # Concaténation
     eec_all = pd.concat([df[core_vars] for df in dfs], ignore_index=True)
 
+    # Résultat
     return eec_all
