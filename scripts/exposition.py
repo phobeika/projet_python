@@ -128,6 +128,31 @@ naf_map = {
     "UZ": "Activités extra-territoriales"
 }
 
+nafr_map = {
+    "": "Sans objet (inactifs occupés)",
+    "A": "Agriculture, sylviculture et pêche",
+    "B": "Industries extractives",
+    "C": "Industrie manufacturière",
+    "D": "Production et distribution d’électricité, de gaz, de vapeur et d’air conditionné",
+    "E": "Production et distribution d’eau ; assainissement, gestion des déchets et dépollution",
+    "F": "Construction",
+    "G": "Commerce ; réparation d’automobiles et de motocycles",
+    "H": "Transports et entreposage",
+    "I": "Hébergement et restauration",
+    "J": "Information et communication",
+    "K": "Activités financières et d’assurance",
+    "L": "Activités immobilières",
+    "M": "Activités spécialisées, scientifiques et techniques",
+    "N": "Activités de services administratifs et de soutien",
+    "O": "Administration publique",
+    "P": "Enseignement",
+    "Q": "Santé humaine et action sociale",
+    "R": "Arts, spectacles et activités récréatives",
+    "S": "Autres activités de services",
+    "T": "Activités des ménages en tant qu’employeurs ; activités indifférenciées des ménages",
+    "U": "Activités extra-territoriales"
+}
+
 
 def exposition(df, var="CSE", year=None, year_col="ANNEE"):
     """
@@ -142,11 +167,9 @@ def exposition(df, var="CSE", year=None, year_col="ANNEE"):
     if year is not None and year_col in df.columns:
         df = df[df[year_col] == year]
 
-    # --- 2. Recodage CSE --- pas besoin, c'est fait avant
-    # if var == "CSE":
-    #    df["CSE_int"] = df["CSE"].astype("Int64")
-    #    df["CSE_label"] = df["CSE_int"].map(cse_map)
-    #    var = "CSE_label"
+    # --- 2. Variable NAF agrégée
+    if var == "NAFR":
+        df["NAFR"] = df["NAFG038UN"].str.upper().str[0]
 
     # --- 3. Comptages ---
     totaux = df.groupby(var).size().rename("effectif_total")
@@ -165,7 +188,7 @@ def exposition(df, var="CSE", year=None, year_col="ANNEE"):
         df_prop["effectif_rabs2"] / df_prop["effectif_total"]*100
     ).round(2)
 
-    # --- 5. Ajouter les labels si var == "CSE" ou "NAF"---
+    # --- 5. Ajouter les labels si var == "CSE" ou "NAF" etc.---
 
     if var == "CSE":
         df_prop["label"] = df_prop.index.map(cse_map)
@@ -174,6 +197,11 @@ def exposition(df, var="CSE", year=None, year_col="ANNEE"):
 
     if var == "NAFG038UN":
         df_prop["label"] = df_prop.index.map(naf_map)
+        df_prop = df_prop.reset_index().rename(columns={'index': var})[
+            ['label', var, 'effectif_total', 'effectif_rabs2', 'proportion_rabs2']]
+
+    if var == "NAFR":
+        df_prop["label"] = df_prop.index.map(nafr_map)
         df_prop = df_prop.reset_index().rename(columns={'index': var})[
             ['label', var, 'effectif_total', 'effectif_rabs2', 'proportion_rabs2']]
 
@@ -194,6 +222,9 @@ def exposition_annee(df, var="SEXE", year_col="ANNEE", annee=None):
 
     if year_col not in df.columns:
         raise ValueError(f"La colonne '{year_col}' est absente du DataFrame.")
+
+    if var == "NAFR":
+        df["NAFR"] = df["NAFG038UN"].str.upper().str[0]
 
     # Filtrage sur l'année si demandé
     if annee is not None:
@@ -415,6 +446,32 @@ def plot_score_exposition(
             4: "Professions intermédiaires",
             5: "Employés",
             6: "Ouvriers"
+        },
+        "NAFR": {
+            "": "Sans objet (inactifs occupés)",
+            "A": "Agriculture, sylviculture et pêche",
+            "B": "Industries extractives",
+            "C": "Industrie manufacturière",
+            "D": "Production et distribution d’électricité, de gaz, de vapeur et d’air conditionné",
+            "E": "Production et distribution d’eau ; assainissement, "
+            "gestion des déchets et dépollution",
+            "F": "Construction",
+            "G": "Commerce ; réparation d’automobiles et de motocycles",
+            "H": "Transports et entreposage",
+            "I": "Hébergement et restauration",
+            "J": "Information et communication",
+            "K": "Activités financières et d’assurance",
+            "L": "Activités immobilières",
+            "M": "Activités spécialisées, scientifiques et techniques",
+            "N": "Activités de services administratifs et de soutien",
+            "O": "Administration publique",
+            "P": "Enseignement",
+            "Q": "Santé humaine et action sociale",
+            "R": "Arts, spectacles et activités récréatives",
+            "S": "Autres activités de services",
+            "T": "Activités des ménages en tant qu’employeurs ;"
+            " activités indifférenciées des ménages",
+            "U": "Activités extra-territoriales"
         }
     }
 
