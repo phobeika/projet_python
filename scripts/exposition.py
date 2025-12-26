@@ -84,7 +84,6 @@ cse_map = {
     "81": "Chômeurs n’ayant jamais travaillé"
 }
 
-
 naf_map = {
     "": "Sans objet (inactifs occupés)",
     "00": "Non renseigné",
@@ -364,40 +363,18 @@ def score_exposition(df, var_list, year1=2019, year2=2020, year_col="ANNEE"):
     return df
 
 
-def plot_evolution_proportion(
-    df,
-    year_col,
-    group_col,
-    value_col,
-    title=None,
-    ylabel=None,
-    figsize=(10, 6),
-    marker="o",
-    colors=None
-):
-
+def plot_evolution_proportion(df, year_col, group_col, value_col, title, ylabel, colors):
     """
-    Trace l'évolution d'une variable quantitative en fonction du temps,
+    Cette fonction trace l'évolution d'une variable quantitative en fonction du temps,
     avec une courbe par modalité d'une variable de groupe.
 
-    Parameters
-    ----------
-    df : pandas.DataFrame
-        Données sources
-    year_col : str
-        Colonne représentant le temps (ex: année)
-    group_col : str
-        Colonne de regroupement (ex: sexe)
-    value_col : str
-        Variable à représenter (ex: proportion)
-    title : str, optional
-        Titre du graphique
-    ylabel : str, optional
-        Label de l'axe Y
-    figsize : tuple, optional
-        Taille de la figure
-    marker : str, optional
-        Marqueur des points
+    Arguments:
+        df (pandas.DataFrame) : données sources
+        year_col (str) : colonne représentant le temps (ex : année)
+        group_col (str) : colonne de regroupement (ex: sexe)
+        value_col (str) : variable à représenter (ex: proportion)
+        title (str) : titre du graphique
+        ylabel (str) : label de l'axe Y
     """
 
     # Pivot pour éviter les doublons d'années
@@ -407,13 +384,13 @@ def plot_evolution_proportion(
         .sort_index()
     )
 
-    plt.figure(figsize=figsize)
+    plt.figure(figsize=(10, 6))
 
     for col in df_pivot.columns:
         plt.plot(
             df_pivot.index,
             df_pivot[col],
-            marker=marker,
+            marker="o",
             label=str(col),
             color=colors.get(col) if colors else None
         )
@@ -427,14 +404,7 @@ def plot_evolution_proportion(
     plt.show()
 
 
-def plot_score_exposition(
-    df,
-    score_col="score_exposition",
-    by=None,
-    labels=None,
-    figsize=(8, 5),
-    title=None
-):
+def plot_score_exposition(df, score_col="score_exposition", by=None, labels=None, title=None):
 
     default_labels = {
         "SEXE": {1: "Homme", 2: "Femme"},
@@ -482,7 +452,7 @@ def plot_score_exposition(
         effectifs = df[score_col].value_counts().sort_index()
         frequences = effectifs / effectifs.sum() * 100
 
-        plt.figure(figsize=figsize)
+        plt.figure(figsize=(8, 5))
         bars = plt.bar(effectifs.index, effectifs.values, edgecolor="black")
 
         for bar, pct in zip(bars, frequences):
@@ -531,7 +501,7 @@ def plot_score_exposition(
 
     table = pd.crosstab(df_plot[score_col], df_plot[by])
 
-    plt.figure(figsize=figsize)
+    plt.figure(figsize=(8, 5))
     bottom = np.zeros(len(table))
 
     for col in table.columns:
@@ -569,14 +539,7 @@ def plot_score_exposition(
     plt.show()
 
 
-def plot_freq_exposition(
-    df,
-    score_col="score_exposition",
-    by="SEXE",
-    labels=None,
-    figsize=(9, 6),
-    title=None
-):
+def plot_freq_exposition(df, score_col="score_exposition", by="SEXE", labels=None, title=None ):
     """
     Graphique en barres empilées à 100 % :
     répartition de `by` pour chaque valeur du score d'exposition.
@@ -650,7 +613,7 @@ def plot_freq_exposition(
     # -----------------------
     # Graphique
     # -----------------------
-    plt.figure(figsize=figsize)
+    plt.figure(figsize=(10, 6))
     bottom = np.zeros(len(table_pct))
 
     for i, col in enumerate(table_pct.columns):
@@ -690,12 +653,7 @@ def plot_freq_exposition(
     plt.show()
 
 
-def regression_exposition(
-    df,
-    target="score_exposition",
-    categorical_vars=None,
-    reference_dict=None
-):
+def regression_exposition(df, target="score_exposition", categorical_vars=None, reference_dict=None):
     """
     Effectue une régression linéaire OLS avec covariance robuste (HC3) sur un dataframe.
     Retourne un DataFrame avec coefficients, intervalles de confiance et p-values,
@@ -749,9 +707,7 @@ def regression_exposition(
     return df_coef, modele_robust
 
 
-def plot_regression_exposition(
-    df_coef,
-        title="Représentation graphique des coefficients de la régression du score d'exposition"):
+def plot_regression_exposition(df_coef):
     """
     Trace les coefficients d'une régression avec intervalles de confiance.
 
@@ -773,18 +729,13 @@ def plot_regression_exposition(
     plt.axvline(0, color='red', linestyle='--', alpha=0.7)
     plt.yticks(y_pos, df_coef["variable"])
     plt.xlabel("Effet marginal sur le score d'exposition")
-    plt.title(title)
+    plt.title("Représentation graphique des coefficients de la régression du score d'exposition")
     plt.grid(axis="x", alpha=0.3)
     plt.tight_layout()
     plt.show()
 
 
-def regression_exposition2(
-    df,
-    target="score_exposition",
-    categorical_vars=None,
-    reference_dict=None
-):
+def regression_exposition2(df, target="score_exposition", categorical_vars=None, reference_dict=None):
     """
     Régression logistique ordinale sur un score discret (0-4) avec covariables qualitatives.
 

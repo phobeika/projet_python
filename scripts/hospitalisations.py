@@ -4,13 +4,12 @@ import lets_plot as lp
 import matplotlib.pyplot as plt
 
 
-def import_hosp(
-    url_main="https://odisse.santepubliquefrance.fr/api/explore/v2.1/catalog/datasets/"
-    "covid-19-synthese-des-indicateurs-de-suivi-de-la-pandemie-dep/exports/json",
-    url_backup="https://minio.lab.sspcloud.fr/phobeika/open_eec/"
-    "covid-19-synthese-des-indicateurs-de-suivi-de-la-pandemie-dep.json"
-):
+def import_hosp(url_main, url_backup):
+    """
+    Cette fonction  importe les données d'hospitalisations depuis le site de Santé publique France
+    """
 
+    
     for url in [url_main, url_backup]:
         try:
             print(f"Tentative de téléchargement depuis: {url}")
@@ -28,59 +27,91 @@ def import_hosp(
 
 def plot_hosp_year(df, year=2020):
     """
-    Filtre par année (par défaut 2020), vérifie la cohérence des données
-    (même nombre de départements chaque jour), agrège les nombres
-    d'hospitalisations par jour pour l'ensemble des départements
-    puis renvoie en graphique l'évolution du nombre d'hospitalisations
-    par jour pendant l'année choisie.
+    Cette fonction :
+        - filtre les données d'hospitalisation par année ;
+        - vérifie la cohérence des données (même nombre de départements chaque jour ;
+        - agrège les hospitalisations par jour pour l'ensemble des départements ;
+        - renvoie en graphique l'évolution du nombre d'hospitalisations par jour pendant l'année choisie.
     """
 
+    # Copie des données
     df = df.copy()
 
-    # --- 1. On met la variable `date` au format date ---
+
+    # Données
+    ## Conversion au dormat data
     df["date"] = pd.to_datetime(df["date"], errors="raise")
 
-    # --- 2. Filtre pour l'année choisie ---
+    ## Sélection de l'année choisie
     df_year = df[df["date"].dt.year == year]
-
     if df_year.empty:
-        raise ValueError(f"Aucune donnée trouvée pour l'année {year}")
+        raise ValueError(f"❌ Aucune donnée trouvée pour l'année {year}")
 
-    # --- 3. Vérifie que les données sont complètes ---
+    ## Vérification de la complétude des données
     dept_count = df_year.groupby("date")["dep"].nunique()
-
     if dept_count.nunique() != 1:
         raise ValueError(
-            "Incohérence détectée : le nombre de départements varie selon les dates."
+            "⚠️ Incohérence détectée : le nombre de départements varie selon les dates."
         )
-
-    # Génère un avertissement s'il y a des valeurs manquantes
     if df_year["hosp"].isna().any():
-        raise ValueError("Présence de valeurs manquantes dans 'hosp'.")
+        raise ValueError("⚠️ Présence de valeurs manquantes dans 'hosp'.")
 
-    # --- 4. Somme le nombre d'hospitalisations à chaque date pour l'ensemble des départements ---
+
+    # Agrégation des hospitalisations par date
     df_daily = df_year.groupby("date", as_index=False)["hosp"].sum()
 
-    # --- 5. Plot ---
-    lp.LetsPlot.setup_html()
 
-    p = (
-        lp.ggplot(df_daily, lp.aes(x="date", y="hosp"))
-        + lp.geom_line(color="#248BFF", size=1.2)
-        + lp.ggtitle(f"Hospitalisations Covid - France - {year}")
-        + lp.xlab("Date")
-        + lp.ylab("Nb hospitalisations")
-        + lp.theme_minimal()
-        + lp.ggsize(800, 400)
+    # Construction du graphique en sortie
+    ## Personnalisation de l'axe des abcisses
+    tous_les_noms = [
+        "Janvier", "Février", "Mars", "Avril", "Mai", "Juin",
+        "Juillet", "Août", "Septembre", "Octobre", "Novembre", "Décembre"
+    ]
+    toutes_les_dates = pd.date_range(start=f'{year}-01-01', periods=12, freq='MS')
+    ticks_dates = toutes_les_dates[2:]
+    ticks_noms = tous_les_noms[2:]
+    date_debut = ticks_dates[0]
+
+    ## Éléments graphiques
+    plt.figure(figsize=(10, 6))
+
+    plt.plot(
+        df_daily["date"], 
+        df_daily["hosp"], 
+        color='#248BFF', 
+        linewidth=2,
+        label='Nombre d\'hospitalisations'
     )
 
-    return p
+    plt.fill_between(
+        df_daily["date"], 
+        df_daily["hosp"], 
+        color='#248BFF', 
+        alpha=0.4
+    )
+
+    plt.grid(True, alpha=0.3)
+    plt.title(f"Hospitalisations liées au Covid-19 en France en {year}", fontsize=14)
+    plt.xlabel("Date")
+    plt.ylabel("Nombre d'hospitalisations")
+
+    ## Application des axes
+    plt.xticks(
+        ticks=ticks_dates, 
+        labels=ticks_noms, 
+        rotation=45,
+        ha='right'
+    )
+    plt.xlim(left=date_debut, right=toutes_les_dates[-1] + pd.Timedelta(days=30))
+    plt.tight_layout()
+    plt.show()
 
 
 def plot_hosp_arrets_trim(df_eec, df_daily, year=2020):
     """
-    Traite les données d'enquête emploi et d'hospitalisation pour une année (par défaut 2020),
-    calcule les agrégats par trimestre et affiche un graphique à double axe.
+    Cette fonction :
+        - traite les données d'enquête emploi et d'hospitalisation pour une année (par défaut 2020) ;
+        - calcule les agrégats par trimestre et affiche un graphique à deux axes des ordonnées.
 
     arguments:
         df_eec (pd.DataFrame): DataFrame contenant l'enquête emploi (colonne 'RABS', 'TRIM')
@@ -91,48 +122,50 @@ def plot_hosp_arrets_trim(df_eec, df_daily, year=2020):
         pd.DataFrame: Le dataframe fusionné utilisé pour le graphique.
     """
 
-    # --- 0. On s'assure que df_eec contient bien l'année 'year'
+    # Données
+    ## Import
     df_eec = df_eec[df_eec['ANNEE'] == year].copy()
     if df_eec.empty:
-        raise ValueError(f"Aucune donnée trouvée pour l'année {year}")
+        raise ValueError(f"❌ Aucune donnée trouvée pour l'année {year}")
 
-    # --- 1. Traitement des Arrêts Maladie (Source: EEC) ---
-    # On ne compte que les absences pour congé maladie (RABS = '2')
+    ## Traitement des Arrêts Maladie (Source: EEC)
+    ### On ne compte que les absences pour congé maladie (RABS = '2')
     df_rabs2 = df_eec[df_eec['RABS'] == '2'].copy()
 
-    # Groupement par trimestre et comptage
+    ### Agrégation par trimestre
     df_trim_count = df_rabs2.groupby('TRIM', as_index=False)\
         .size().rename(columns={'size': 'Effectifs'})
 
-    # Formatage de la colonne TRIM (ajout du 'T' devant le numéro)
+    ### Formatage de la colonne TRIM (ajout du 'T' devant le numéro)
     df_trim_count['TRIM'] = 'T' + df_trim_count['TRIM'].astype(str)
 
-    # --- 2. Traitement des Hospitalisations (Source: df_daily) ---
-    # Création d'une copie pour ne pas modifier l'original
+    ## Traitement des Hospitalisations (Source: df_daily)
     df_daily_clean = df_daily.copy()
 
-    # Extraction année et mois (si ce n'est pas déjà fait)
+    ### Extraction année et mois (si ce n'est pas déjà fait)
     if not pd.api.types.is_datetime64_any_dtype(df_daily_clean['date']):
         df_daily_clean['date'] = pd.to_datetime(df_daily_clean['date'])
 
     df_daily_clean['year'] = df_daily_clean['date'].dt.year
     df_daily_clean['month'] = df_daily_clean['date'].dt.month
 
-    # Filtrage sur year
+    ### Sélection de l'année
     df_daily_year = df_daily_clean[df_daily_clean['year'] == year]
 
-    # Calcul spécifique des trimestres (selon votre logique : T1 = Mars uniquement)
+    ### Calcul spécifique des trimestres
     t1 = df_daily_year[df_daily_year['month'] == 3]['hosp'].sum()
     t2 = df_daily_year[df_daily_year['month'].isin([4, 5, 6])]['hosp'].sum()
     t3 = df_daily_year[df_daily_year['month'].isin([7, 8, 9])]['hosp'].sum()
     t4 = df_daily_year[df_daily_year['month'].isin([10, 11, 12])]['hosp'].sum()
 
+    ### Construction des dataframes
     df_hosp_trim = pd.DataFrame({
         "TRIM": ["T1", "T2", "T3", "T4"],
         "hosp": [t1, t2, t3, t4]
     })
 
-    # --- 3. Fusion des données ---
+
+    # Fusion des données
     df_fusionne = pd.merge(
         df_hosp_trim,
         df_trim_count,
@@ -140,46 +173,40 @@ def plot_hosp_arrets_trim(df_eec, df_daily, year=2020):
         how='left'
     )
 
-    # --- 4. Création du Graphique ---
-    # Définition des couleurs
-    color_hosp = '#248BFF'  # Bleu Insee
-    color_eff = '#7A57FF'   # Violet Insee
 
-    fig, ax1 = plt.subplots(figsize=(8, 5))
+    # Construction du graphique en sortie
+    fig, ax1 = plt.subplots(figsize=(10, 6))
 
-    # Premier axe (Hospitalisations)
+    ## Hospitalisations (premier axe)
     ax1.set_xlabel('Trimestre')
-    ax1.set_ylabel('Hospitalisations (en millions)', color=color_hosp, fontsize=12)
+    ax1.set_ylabel('Nombre d\'hospitalisations (en millions)', color='#248BFF', fontsize=12)
     ax1.plot(
         df_fusionne['TRIM'],
         df_fusionne['hosp'],
-        color=color_hosp,
+        color='#248BFF',
         marker='o',
         linewidth=2,
         label='Hospitalisations'
         )
-    ax1.tick_params(axis='y', labelcolor=color_hosp)
+    ax1.tick_params(axis='y', labelcolor='#248BFF')
+    ax1.grid(True, alpha=0.3)
 
-    # Ajout d'une grille verticale légère pour la lisibilité
-    ax1.grid(axis='x', alpha=0.3)
-
-    # Second axe (Arrêts maladie)
+    ## Arrêts maladie (second axe)
     ax2 = ax1.twinx()
-    ax2.set_ylabel('Arrêts maladie', color=color_eff, fontsize=12)
+    ax2.set_ylabel('Arrêts maladie', color='#7A57FF', fontsize=12)
     ax2.plot(
         df_fusionne['TRIM'],
         df_fusionne['Effectifs'],
-        color=color_eff,
+        color='#7A57FF',
         marker='^',
         linewidth=2,
         label='Arrêts maladie'
         )
-    ax2.tick_params(axis='y', labelcolor=color_eff)
+    ax2.tick_params(axis='y', labelcolor='#7A57FF')
 
-    plt.title(f'Hospitalisations liées au Covid-19 et arrêts maladie en {year}')
+    ## Éléments graphiques additionnels
+    plt.title(f'Hospitalisations liées au Covid-19 et arrêts maladie en France en {year}')
     plt.show()
 
     correlation = df_fusionne[['hosp', 'Effectifs']].corr().iloc[0, 1]
     print('Coefficient de corrélation entre les deux variables :', round(correlation, 2))
-
-    # return df_fusionne
