@@ -30,7 +30,7 @@ def data_prep(df, min_obs):
 
     # Évaluation des groupes obtenus
     n_groupes = df["groupe"].nunique()
-    print(f"Nombre de combinaisons {"groupe"} conservées : {n_groupes}")
+    print(f"Nombre de combinaisons conservées : {n_groupes}")
     
     return df
 
@@ -85,25 +85,44 @@ def estimation_statique(df, traitement, tableau=False):
 
 
 # Estimation de la double-différences dynamique
-def estimation_dynamique(df, interaction_cols, verbose=False):
+def estimation_dynamique(df, var_traitement='expose_1'):
     """
-    Cette fonction estime le modèle d'étude d'événement.
+    Estime un modèle d'étude d'événement (Event Study).
     
-    Arguments :
-        - df : les données sur lesquelles estimer le modèle ;
-        - interaction_cols : les noms de colonnes d'interaction (leads et lags).
+    Arguments :
+        - df : DataFrame contenant les données.
+        - var_traitement : Nom de la variable indicatrice du groupe traité (ex: 'expose_1').
+        - verbose : Si True, affiche le résumé statistique.
 
-    Output : la table de résultats.
+    Output : Le résultat de l'estimation PanelOLS.
     """
+    # 1. Copie pour ne pas modifier le DataFrame original
+    df_reg = df.copy()
 
-    # Préparation de l'index (sur une copie pour sécurité)
-    df_reg = df.set_index(["groupe", "ANNEE"])
+    # 2. Gestion de l'index pour éviter la KeyError
+    # Si 'groupe' n'est pas dans les colonnes, c'est qu'il est déjà dans l'index
+    if 'groupe' not in df_reg.columns:
+        df_reg = df_reg.reset_index()
+
+    # 3. Création automatique des termes d'interaction
+    # On cherche toutes les colonnes créées par get_dummies (commençant par 'ttt_')
+    dummies_annees = [c for c in df_reg.columns if c.startswith('ttt_')]
+    vars_interaction = []
+
+    for col in dummies_annees:
+        nom_interaction = f'{var_traitement}_{col}'
+        # Calcul de l'interaction : 1{t == j} * 1{exposé == 1}
+        df_reg[nom_interaction] = df_reg[var_traitement] * df_reg[col]
+        vars_interaction.append(nom_interaction)
+
+    # 4. Préparation finale de l'index pour PanelOLS
+    df_reg = df_reg.set_index(["groupe", "ANNEE"])
     
-    # Définition de la variable expliquée Y et des variables d'interaction X
+    # 5. Définition des variables
     Y = df_reg["sh_arret"]
-    X = df_reg[interaction_cols]
+    X = df_reg[vars_interaction]
 
-    # Configuration du modèle
+    # 6. Estimation du modèle
     modele = PanelOLS(
         Y,                      # Variable expliquée: part d'arrêts maladie Y_it
         X,                      # Variable explicatives: 1{t == j} x 1{exposé == 1}
@@ -112,15 +131,10 @@ def estimation_dynamique(df, interaction_cols, verbose=False):
         drop_absorbed=True      # Pour éviter les erreurs de colinéarité
     )
 
-    # Estimation avec erreurs-types clusterisées (Robustes à l'autocorrélation intra-groupe)
+    # Erreurs-types robustes clusterisées par entité
     resultat = modele.fit(cov_type='clustered', cluster_entity=True)
 
-    # Résultat
-    if verbose:
-        print(resultat.summary)
-
     return resultat
-
 
 # Représentation graphique de l'étude d'évènement
 def plot_event_study(resultat):
@@ -178,14 +192,14 @@ def plot_event_study(resultat):
         ecolor='#CABCFF',
         elinewidth=4,
         capsize=0,
-        label='Coefficients estimés et IC à 95%'
+        label='Coefficients estimés et intervalle de confiance à 95 %'
     )
 
     plt.axhline(0, linestyle='dashed', color='grey')
 
     plt.title("Étude d\'évènement : Impact sur les arrêts maladie")
     plt.xlabel("Années relatives au traitement (0 = 2020)")
-    plt.ylabel("Effet estimé sur l\'activité")
+    plt.ylabel("Effet estimé sur la part d'arrêts de travail")
     plt.legend()
     plt.grid(True, alpha=0.3)
     
