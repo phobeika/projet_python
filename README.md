@@ -10,7 +10,7 @@ Notre projet vise à étudier les éventuels effets durables de l'exposition au 
 
 ### Données d'arrêts maladie
 
-L'[enquête sur l'emploi, le chômage et l'inactivité](https://www.insee.fr/fr/metadonnees/source/serie/s1223) (appelée Enquête emploi en continu, ou "EEC") est réalisée par l'Insee. Elle vise à dresser un état des lieux en continu du marché du travail français. Menée une fois par an depuis 1950, elle est réalisée sur toutes les semaines de l'année depuis 2003. Nous obtenons les données pour les années XXXX à XXXX à partir des fichiers détails disponibles sur le site de l'Insee.
+L'[enquête sur l'emploi, le chômage et l'inactivité](https://www.insee.fr/fr/metadonnees/source/serie/s1223) (appelée Enquête emploi en continu, ou "EEC") est réalisée par l'Insee. Elle vise à dresser un état des lieux en continu du marché du travail français. Menée une fois par an depuis 1950, elle est réalisée sur toutes les semaines de l'année depuis 2003. Nous obtenons les données pour les années 2010 à 2024 à partir des fichiers détails disponibles sur le site de l'Insee.
 
 ### Propagation du Covid-19
 
@@ -35,4 +35,4 @@ Notre analyse repose sur la construction d'une variable d'exposition au Covid-19
 
 ## Résultats
 
-Nous estimons que l'exposition au Covid-19 en 2020 génère une probabilité supérieure d’environ 0,85 point de pourcentage d’être en arrêt maladie dans les années suivantes pour les groupes exposés par rapport aux autres, soit une augmentation relative d’environ un tiers par rapport à la moyenne de l’échantillon. Nous concluons donc à un effet significatif et durable de l'exposition au Covid-19 en 2020 sur le nombre d'arrêts maladie et donc sur l'offre de travail dans les années suivantes.
+Nous estimons que l'exposition au Covid-19 en 2020 augmente de 0,9 point de pourcentage en moyenne la probabilité d’être en arrêt maladie dans les années suivantes pour les groupes exposés par rapport aux autres, soit une augmentation relative d’environ un tiers par rapport à la moyenne de l’échantillon. Nous concluons donc à un effet significatif et durable de l'exposition au Covid-19 en 2020 sur le nombre d'arrêts maladie et donc sur l'offre de travail dans les années suivantes.
