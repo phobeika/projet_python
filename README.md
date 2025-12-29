@@ -1,21 +1,12 @@
-# Python pour la data science
+# Projet python : l'effet durable du Covid-19 sur l'offre de travail
 
 Projet réalisé en 2025 par Lucile Aubain, Jean Lavallée et Paul Hobeika dans le cadre du cours de *Python pour la data science* enseigné en deuxième année de l'ENSAE.
 
+## Introduction <a name="introduction">
 
-# Sommaire
+Notre projet vise à étudier les éventuels effets durables de l'exposition au Covid-19 sur les arrêts de travail pour raison de santé, et ainsi contribuer à l'analyse des liens entre santé et offre de travail. 
 
-1. [Introduction](#readme_introduction)
-2. [Données](#readme_donnees)
-3. [Méthode](#readme_methode)
-4. [Résultats](#readme_resultats)
-
-
-## 1. Introduction <a name="introduction">
-
-
-
-## 2. Données <a name="donnees">
+## Données <a name="donnees">
 
 ### Données d'arrêts maladie
 
@@ -23,23 +14,25 @@ L'[enquête sur l'emploi, le chômage et l'inactivité](https://www.insee.fr/fr/
 
 ### Propagation du Covid-19
 
+Nous estimons l'intensité de la propagation du Covid-19 pour l'année 2020 à partir des données d'hopitalisation disponibles *via* l'API [Odissé](https://odisse.santepubliquefrance.fr/api/explore/v2.1/console) de Santé Publique France.
 
 
-### Exposition au Covid par secteur d'activité et région
+## Organisation du projet
+
+Le fichier `script.ipnyb` constitue notre rapport final. Le code qu'il contient fait appel aux différents fichiers présents dans le dossier `scripts/` : 
+
+- `requirements.txt` contient les librairies python que l'on utilise, elles sont installées par `pip` si nécessaire
+- `import_eec` contient les différentes fonctions utilisées pour l'import et le recodage des données de l'enquête mploi en continu
+- `import_eec_all` comporte les liens URL des différentes bases de données présentes sur le site de l'Insee (plus des copies de secours sauvegardées sur le stockage du SSPCloud) et une fonction permettant d'importer et d'assembler l'ensemble des bases de données de l'EEC de 2010 à 2024. Nous avons réalisé une copie de cette dernière base de données sur le SSPCloud de manière à écourter le temps d'importation (le script invite à choisir l'une des deux méthodes).
+- `hospitalisation.py` rassemble les fonctions permettant d'importer les données d'hospitalisation pour Covid-19 depuis l'API Odissé, de les visualiser et d'étudier leur corrélation avec les arrêts maladie déclarés dans l'enquête emploi
+- `exposition.py` contient le code permettant de construire et d'étudier la variable d'exposition au Covid-19 que l'on utilise par la suite comme variable explicative
+- enfin, `dids.py` rassemble les fonctions utilisées dans l'analyse en doubles différences.
+
+## Méthode
+
+Notre analyse repose sur la construction d'une variable d'exposition au Covid-19 durant l'année 2020 à partir des données sur les arrêts maladie de la même année, méthode présentée dans la première partie du rapport. Dans la seconde, nous estimons l'effet causal de cette variable d'exposition sur les arrêts maladie dans les années qui suivent.
 
 
-### Organisation des données
+## Résultats
 
-Les données utilisées dans l'analyse descriptive et la modélisation sont enregistrées de manière temporaire en copie locale dans le dossier ```data```.
-
-Le dossier ```scripts``` contient certaines fonctions et sections de codes appelées ensuite dans le notebook principal ```notebook.ipynb``` de façon à le rendre plus lisible et flexible. Il s'agit des scripts suivants :
-- ```requirements.txt``` est appelé par pip afin d'installer les paquets nécessaires en début d'exécution;
-- ```import_eec.py``` permet d'appeler la fonction d'import des données de l'enquête emploi en continu;
-- ```exemple.py``` gnagnagna.
-
-## 3. Méthode <a name="methode">
-
-
-
-## 4. Résultats <a name="resultats">
-
+Nous estimons que l'exposition au Covid-19 en 2020 génère une probabilité supérieure d’environ 0,85 point de pourcentage d’être en arrêt maladie dans les années suivantes pour les groupes exposés par rapport aux autres, soit une augmentation relative d’environ un tiers par rapport à la moyenne de l’échantillon. Nous concluons donc à un effet significatif et durable de l'exposition au Covid-19 en 2020 sur le nombre d'arrêts maladie et donc sur l'offre de travail dans les années suivantes.
